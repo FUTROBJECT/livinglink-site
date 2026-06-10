@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field Metrics — Two-Axis Demo</title>
+<style>
+  /* ===== design tokens — Stripe/Notion/Linear-inspired ===== */
+  :root{
+    --bg:#ffffff;
+    --bg-subtle:#f7f8fa;
+    --surface:#ffffff;
+    --text:#1a1f36;
+    --text-2:#4f566b;
+    --muted:#8792a2;
+    --border:#e3e8ee;
+    --border-strong:#d5dbe3;
+    --accent:#635bff;
+    --accent-soft:#f0efff;
+    --accent-text:#5851e6;
+    --pos:#1a7a3a;
+    --neg:#cd3d64;
+    --shadow-sm:0 1px 2px rgba(26,31,54,.06);
+    --shadow-md:0 4px 12px rgba(26,31,54,.08);
+    --radius:8px;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Inter",Roboto,Helvetica,Arial,sans-serif;
+  }
+  [data-theme="dark"]{
+    --bg:#101116;
+    --bg-subtle:#16181f;
+    --surface:#191b23;
+    --text:#e9eaf0;
+    --text-2:#b4b8c5;
+    --muted:#7c8296;
+    --border:#272a35;
+    --border-strong:#343847;
+    --accent:#7b80f7;
+    --accent-soft:#23243a;
+    --accent-text:#9a9efb;
+    --pos:#4ccb7e;
+    --neg:#f06a8c;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow-md:0 4px 14px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  html{background:var(--bg);}
+  body{max-width:820px;margin:0 auto;padding:56px 48px 96px;font-family:var(--font);
+    color:var(--text);background:var(--bg);line-height:1.65;font-size:15px;
+    -webkit-font-smoothing:antialiased;transition:background .25s,color .25s;}
+
+  /* ===== header ===== */
+  .doc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:6px;}
+  h1{font-size:26px;font-weight:650;letter-spacing:-.02em;margin:0 0 4px;}
+  .sub{color:var(--text-2);font-size:14.5px;margin:0 0 20px;max-width:560px;}
+  .sub b{color:var(--text);font-weight:600;}
+  #themetoggle{flex:none;display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12.5px;
+    font-weight:500;color:var(--text-2);background:var(--surface);border:1px solid var(--border);
+    border-radius:999px;padding:6px 13px;cursor:pointer;box-shadow:var(--shadow-sm);
+    transition:border-color .15s,color .15s,background .25s;}
+  #themetoggle:hover{border-color:var(--border-strong);color:var(--text);}
+
+  /* ===== tabs (Linear-style underline) ===== */
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin:18px 0 0;flex-wrap:wrap;}
+  .tab-btn{font-family:var(--font);font-size:13.5px;font-weight:500;padding:9px 14px;border:none;background:none;
+    color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+    border-radius:6px 6px 0 0;transition:color .12s,background .12s;}
+  .tab-btn:hover{color:var(--text);background:var(--bg-subtle);}
+  .tab-btn.active{color:var(--accent-text);border-bottom-color:var(--accent);font-weight:600;}
+  .tab-panel{display:none;padding:22px 0 0;}
+  .tab-panel.active{display:block;}
+
+  h2{font-size:17px;font-weight:650;letter-spacing:-.01em;margin:20px 0 8px;}
+  p{margin:0 0 12px;color:var(--text-2);}
+  .tab-panel > p:first-of-type{color:var(--text-2);}
+
+  /* ===== region segmented control ===== */
+  .filterrow{display:flex;align-items:center;gap:12px;margin:8px 0 20px;flex-wrap:wrap;}
+  .filterrow .lbl{font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);}
+  .seg{display:inline-flex;background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px;}
+  .seg button{font-family:var(--font);font-size:12.5px;font-weight:500;padding:5px 14px;border:none;
+    background:transparent;color:var(--text-2);cursor:pointer;border-radius:6px;transition:color .12s,background .12s,box-shadow .12s;}
+  .seg button:hover{color:var(--text);}
+  .seg button.on{background:var(--surface);color:var(--text);font-weight:600;box-shadow:var(--shadow-sm);border:0;}
+
+  /* ===== chart card ===== */
+  .chart{display:flex;align-items:flex-end;gap:28px;height:180px;padding:20px 20px 14px;
+    background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius);transition:background .25s;}
+  .bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;height:100%;}
+  .bar .val{font-family:var(--font);font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:6px;
+    font-variant-numeric:tabular-nums;}
+  .bar .col{width:56%;background:linear-gradient(180deg,var(--accent),var(--accent-text));
+    border-radius:6px 6px 2px 2px;transition:height .3s cubic-bezier(.4,0,.2,1);min-height:4px;}
+  .bar .name{font-family:var(--font);font-size:11.5px;font-weight:500;color:var(--muted);margin-top:8px;}
+
+  /* ===== table (Stripe-style) ===== */
+  table{width:100%;border-collapse:collapse;margin-top:20px;font-size:14px;}
+  th{font-family:var(--font);font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);text-align:left;padding:8px 12px;border-bottom:1px solid var(--border-strong);}
+  td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text);}
+  tbody tr{transition:background .1s;}
+  tbody tr:hover{background:var(--bg-subtle);}
+  td.num{font-family:var(--font);text-align:right;font-variant-numeric:tabular-nums;font-weight:500;}
+  td.num.pos{color:var(--pos);}
+  td.num.neg{color:var(--neg);}
+
+  /* ===== callout ===== */
+  .note{background:var(--accent-soft);border:1px solid var(--border);border-left:3px solid var(--accent);
+    color:var(--text-2);padding:13px 16px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;font-size:14px;}
+</style>
+<style id="ll-styles">
+/* ===== Living Link comment layer =====
+   Token-driven chrome (Stripe/Notion/Linear-inspired). Self-contained: light
+   defaults at :root, dark overrides when the HOST sets <html data-theme="dark">.
+   Hosts without a theme attribute (e.g. explainer.html) stay light. */
+:root{
+  --ll-font:-apple-system,BlinkMacSystemFont,"Segoe UI","Inter",Roboto,Helvetica,Arial,sans-serif;
+  --ll-surface:#ffffff;
+  --ll-surface-2:#f7f8fa;
+  --ll-text:#1a1f36;
+  --ll-text-2:#4f566b;
+  --ll-muted:#8792a2;
+  --ll-border:#e3e8ee;
+  --ll-border-strong:#c9d0da;
+  --ll-accent:#635bff;
+  --ll-accent-text:#5851e6;
+  --ll-accent-soft:#f0efff;
+  --ll-ok:#1a7a3a;
+  --ll-ok-soft:#e8f6ed;
+  --ll-warn-text:#8a5a0a;
+  --ll-warn-soft:#fff4e5;
+  --ll-warn-border:#f0c98a;
+  --ll-hl:rgba(255,221,87,.30);
+  --ll-shadow-sm:0 1px 3px rgba(26,31,54,.08);
+  --ll-shadow-md:0 4px 14px rgba(26,31,54,.12);
+  --ll-shadow-lg:0 12px 36px rgba(26,31,54,.18);
+}
+[data-theme="dark"]{
+  --ll-surface:#191b23;
+  --ll-surface-2:#21242e;
+  --ll-text:#e9eaf0;
+  --ll-text-2:#b4b8c5;
+  --ll-muted:#7c8296;
+  --ll-border:#272a35;
+  --ll-border-strong:#3a3e4d;
+  --ll-accent:#7b80f7;
+  --ll-accent-text:#9a9efb;
+  --ll-accent-soft:#23243a;
+  --ll-ok:#4ccb7e;
+  --ll-ok-soft:#16271d;
+  --ll-warn-text:#e8b04a;
+  --ll-warn-soft:#2a2113;
+  --ll-warn-border:#5a4517;
+  --ll-hl:rgba(255,213,74,.22);
+  --ll-shadow-sm:0 1px 3px rgba(0,0,0,.5);
+  --ll-shadow-md:0 4px 14px rgba(0,0,0,.55);
+  --ll-shadow-lg:0 12px 36px rgba(0,0,0,.6);
+}
+
+body{position:relative;}
+body.ll-open{margin-right:360px;transition:margin .25s ease;}
+@media (max-width:1100px){ body.ll-open{margin-right:0;} }
+
+.ll-anchored{background:var(--ll-hl);box-shadow:0 0 0 2px var(--ll-hl);border-radius:3px;cursor:pointer;}
+body.ll-commenting [data-ll]{cursor:pointer;}
+body.ll-commenting [data-ll]:hover{background:var(--ll-accent-soft);box-shadow:0 0 0 2px var(--ll-accent);border-radius:3px;}
+.ll-flash{animation:ll-flash 1.4s ease;}
+@keyframes ll-flash{0%{background:var(--ll-hl);box-shadow:0 0 0 3px var(--ll-accent);}100%{background:transparent;box-shadow:none;}}
+
+/* margin rail — a fixed gutter on the right of the viewport, never over content.
+   pointer-events:none lets clicks fall through the empty gutter; cards re-enable. */
+#ll-rail{position:fixed;top:0;right:0;width:352px;height:100vh;display:none;overflow:hidden;
+  font-family:var(--ll-font);pointer-events:none;z-index:55;}
+body.ll-open #ll-rail{display:block;}
+.ll-card{position:absolute;right:16px;width:318px;pointer-events:auto;background:var(--ll-surface);
+  border:1px solid var(--ll-border);
+  border-radius:12px;box-shadow:var(--ll-shadow-sm);padding:13px 15px;font-size:13px;line-height:1.5;
+  color:var(--ll-text);
+  transition:top .18s ease, box-shadow .15s, border-color .15s, background .25s, transform .15s;}
+.ll-card:hover{box-shadow:var(--ll-shadow-md);transform:translateY(-1px);}
+.ll-card.ll-resolved{background:var(--ll-surface);opacity:.78;}
+.ll-card.ll-resolved:hover{opacity:1;}
+.ll-card.ll-sel{border-color:var(--ll-accent);box-shadow:0 0 0 3px var(--ll-accent-soft),var(--ll-shadow-md);}
+.ll-snip{font-size:11.5px;color:var(--ll-muted);margin-bottom:8px;background:var(--ll-surface-2);
+  border-left:2px solid var(--ll-accent);padding:5px 9px;border-radius:0 6px 6px 0;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.ll-card.ll-resolved .ll-snip{border-left-color:var(--ll-ok);}
+.ll-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px;}
+.ll-who{display:flex;align-items:center;gap:7px;font-weight:600;font-size:12.5px;color:var(--ll-text);}
+.ll-av{width:22px;height:22px;border-radius:50%;color:#fff;font-size:9.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex:none;
+  box-shadow:0 0 0 2px var(--ll-surface),0 1px 2px rgba(0,0,0,.15);}
+.ll-badge{font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ll-accent-text);background:var(--ll-accent-soft);border-radius:999px;padding:2.5px 8px;white-space:nowrap;}
+.ll-card.ll-resolved .ll-badge{color:var(--ll-ok);background:var(--ll-ok-soft);}
+.ll-text{margin:4px 0 6px;color:var(--ll-text-2);}
+.ll-reply{position:relative;margin:6px 0 6px 10px;padding:6px 10px;font-size:12.5px;color:var(--ll-text-2);
+  background:var(--ll-surface-2);border-radius:8px;border-left:2px solid var(--ll-border-strong);}
+.ll-reply .ll-who{font-size:11.5px;margin-bottom:2px;}
+.ll-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.ll-btn{font-family:var(--ll-font);font-size:11.5px;font-weight:500;border:1px solid transparent;
+  background:var(--ll-surface-2);color:var(--ll-text-2);
+  padding:4.5px 11px;border-radius:7px;cursor:pointer;transition:border-color .12s,color .12s,background .12s;}
+.ll-btn:hover{border-color:var(--ll-border-strong);color:var(--ll-text);background:var(--ll-surface);}
+.ll-btn.ll-pri{background:var(--ll-accent);color:#fff;border-color:var(--ll-accent);}
+.ll-btn.ll-pri:hover{background:var(--ll-accent-text);border-color:var(--ll-accent-text);color:#fff;}
+.ll-replybox{display:none;margin-top:7px;}
+.ll-replybox.ll-show{display:block;}
+.ll-replybox input{width:100%;border:1px solid var(--ll-border);border-radius:6px;padding:6px 8px;
+  font-family:var(--ll-font);font-size:12.5px;box-sizing:border-box;background:var(--ll-surface);color:var(--ll-text);}
+.ll-replybox input:focus{outline:none;border-color:var(--ll-accent);box-shadow:0 0 0 3px var(--ll-accent-soft);}
+
+/* ===== the dock — ALL layer chrome lives in one floating pill (bottom center),
+   like a media-player control bar: a familiar affordance instead of buttons in
+   four corners. Status chips stack just above it. ===== */
+#ll-dock{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:61;
+  display:flex;align-items:center;gap:2px;padding:5px;
+  background:color-mix(in srgb, var(--ll-surface) 82%, transparent);
+  -webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);
+  border:1px solid var(--ll-border);border-radius:999px;box-shadow:var(--ll-shadow-md);
+  font-family:var(--ll-font);}
+@supports not (backdrop-filter:blur(1px)){ #ll-dock{background:var(--ll-surface);} }
+#ll-dock button{display:inline-flex;align-items:center;gap:7px;border:none;background:transparent;
+  color:var(--ll-text-2);font-family:var(--ll-font);font-size:12.5px;font-weight:500;
+  padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;
+  transition:background .12s,color .12s;}
+#ll-dock button:hover{background:var(--ll-surface-2);color:var(--ll-text);}
+#ll-dock button.ll-on{background:var(--ll-accent);color:#fff;}
+#ll-dock button svg{width:15px;height:15px;flex:none;}
+.ll-dock-sep{width:1px;height:18px;background:var(--ll-border);margin:0 3px;flex:none;}
+
+/* one slot, two states: "Comments · n" opens the rail; "Hide" closes it */
+#ll-collapse{display:none;}
+body.ll-open #ll-handle{display:none;}
+body.ll-open #ll-collapse{display:inline-flex;}
+
+/* read-mode appears in the dock only when the adapter supports it */
+#ll-readmode{display:none;}
+#ll-readmode.ll-avail{display:inline-flex;}
+
+/* status chips — stacked above the dock, same center axis */
+#ll-status{position:fixed;bottom:66px;left:50%;transform:translateX(-50%);z-index:60;
+  display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;
+  font-family:var(--ll-font);}
+#ll-status > div{pointer-events:auto;}
+#ll-elsewhere{display:none;background:var(--ll-accent-soft);border:1px solid var(--ll-border);
+  color:var(--ll-accent-text);border-radius:999px;padding:6px 14px;font-size:11.5px;
+  font-weight:500;max-width:min(480px,90vw);box-shadow:var(--ll-shadow-sm);text-align:center;}
+#ll-elsewhere.ll-show{display:block;}
+#ll-orphan{display:none;background:var(--ll-warn-soft);border:1px solid var(--ll-warn-border);
+  color:var(--ll-warn-text);border-radius:999px;padding:6px 14px;font-size:11.5px;
+  font-weight:500;max-width:min(480px,90vw);box-shadow:var(--ll-shadow-sm);cursor:pointer;text-align:center;}
+#ll-orphan.ll-show{display:block;}
+
+/* composer */
+#ll-composer{position:fixed;z-index:70;width:308px;background:var(--ll-surface);border:1px solid var(--ll-border);
+  border-radius:14px;box-shadow:var(--ll-shadow-lg);padding:14px;font-family:var(--ll-font);display:none;color:var(--ll-text);}
+#ll-composer .ll-ctx{font-size:11.5px;color:var(--ll-muted);margin-bottom:9px;line-height:1.45;
+  background:var(--ll-surface-2);border-left:2px solid var(--ll-accent);padding:5px 9px;border-radius:0 6px 6px 0;}
+#ll-composer .ll-ctx b{color:var(--ll-accent-text);}
+#ll-composer textarea{width:100%;min-height:68px;resize:vertical;border:1px solid var(--ll-border);border-radius:9px;
+  padding:9px 10px;font-family:var(--ll-font);font-size:13px;box-sizing:border-box;background:var(--ll-surface-2);color:var(--ll-text);
+  transition:border-color .12s,background .12s;}
+#ll-composer textarea:focus{background:var(--ll-surface);}
+#ll-composer textarea:focus{outline:none;border-color:var(--ll-accent);box-shadow:0 0 0 3px var(--ll-accent-soft);}
+#ll-composer .ll-row{display:flex;justify-content:flex-end;gap:7px;margin-top:9px;}
+
+@media print{ #ll-rail,#ll-dock,#ll-status,#ll-composer{display:none!important;} body.ll-open{margin-right:0!important;} .ll-anchored{background:none!important;box-shadow:none!important;} }
+
+</style>
+</head>
+<body>
+
+  <div class="doc-head">
+    <div>
+      <h1>Field Metrics</h1>
+      <p class="sub">Two-axis demo — tab <b>and</b> region. A comment remembers both; it surfaces only in the state it was made in.</p>
+    </div>
+    <button id="themetoggle" title="Toggle theme"><span id="themetxt">◐ Dark</span></button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab-btn active" onclick="switchTab('summary')">Summary</div>
+    <div class="tab-btn" onclick="switchTab('metrics')">Metrics</div>
+    <div class="tab-btn" onclick="switchTab('plan')">Plan</div>
+  </div>
+
+  <div class="tab-panel active" id="tab-summary">
+    <h2>Where things stand</h2>
+    <p>Throughput recovered in the back half of the quarter, but the recovery is uneven across regions. The headline number is healthy; the regional picture is the conversation worth having before the review.</p>
+    <p>This page is a proof of concept for state-aware comments: switch tabs and switch regions, and watch comments appear only where they belong.</p>
+  </div>
+
+  <div class="tab-panel" id="tab-metrics">
+    <h2>Throughput by band</h2>
+    <p>Units completed per work-band. Use the region control to switch the view — anything you comment on here remembers which region was selected when you wrote it.</p>
+
+    <div class="filterrow">
+      <span class="lbl">Region</span>
+      <div class="seg" id="regionseg">
+        <button data-region="all" class="on">All</button>
+        <button data-region="north">North</button>
+        <button data-region="south">South</button>
+      </div>
+    </div>
+
+    <div class="chart" data-region-aware="true" id="chart">
+      <div class="bar"><div class="val" data-band="A">120</div><div class="col" style="height:80%"></div><div class="name">Band A</div></div>
+      <div class="bar"><div class="val" data-band="B">95</div><div class="col" style="height:63%"></div><div class="name">Band B</div></div>
+      <div class="bar"><div class="val" data-band="C">80</div><div class="col" style="height:53%"></div><div class="name">Band C</div></div>
+    </div>
+
+    <table data-region-aware="true">
+      <thead><tr><th>Band</th><th>Units</th><th>vs Forecast</th></tr></thead>
+      <tbody id="tbody">
+        <tr><td>Band A</td><td class="num" data-cell="A">120</td><td class="num pos" data-cell="A-diff">+20</td></tr>
+        <tr><td>Band B</td><td class="num" data-cell="B">95</td><td class="num pos" data-cell="B-diff">+35</td></tr>
+        <tr><td>Band C</td><td class="num" data-cell="C">80</td><td class="num pos" data-cell="C-diff">+30</td></tr>
+      </tbody>
+    </table>
+
+    <p>The forecast line is fixed; the units shift by region. Comment on a bar or a row while a region is active to pin the discussion to that view.</p>
+  </div>
+
+  <div class="tab-panel" id="tab-plan">
+    <h2>Next steps</h2>
+    <p>Pull the daily logs for the under-forecast bands before the review, and decide whether the regional split changes how we staff the next cycle.</p>
+    <div class="note">This callout lives on the Plan tab. A comment here is invisible on Summary and Metrics — and the margin tells you it's there.</div>
+  </div>
+
+  <script>
+    // ---- host: theme toggle (pure CSS via data-theme; layer styles follow) ----
+    (function(){
+      var KEY='demo-theme';
+      var saved=null; try{ saved=localStorage.getItem(KEY); }catch(e){}
+      function apply(t){
+        if(t==='dark'){ document.documentElement.setAttribute('data-theme','dark'); }
+        else{ document.documentElement.removeAttribute('data-theme'); }
+        var txt=document.getElementById('themetxt');
+        if(txt) txt.textContent = t==='dark' ? '◑ Light' : '◐ Dark';
+      }
+      if(saved==='dark') apply('dark');
+      document.getElementById('themetoggle').addEventListener('click', function(){
+        var dark=document.documentElement.getAttribute('data-theme')==='dark';
+        var next=dark?'light':'dark';
+        apply(next);
+        try{ localStorage.setItem(KEY,next); }catch(e){}
+      });
+    })();
+
+    // ---- host: tab switching (the convention the adapter expects) ----
+    function switchTab(key){
+      document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+      var btn = document.querySelector('.tab-btn[onclick*="\''+key+'\'"]'); if(btn) btn.classList.add('active');
+      var panel = document.getElementById('tab-'+key); if(panel) panel.classList.add('active');
+    }
+
+    // ---- host: region filter — updates region-aware content IN PLACE so the
+    // comment layer's anchors stay attached to the same DOM nodes ----
+    var DATA = {
+      all:   { A:120, B:95, C:80 },
+      north: { A:70,  B:40, C:35 },
+      south: { A:50,  B:55, C:45 }
+    };
+    var FORECAST = { A:100, B:60, C:50 };
+    var MAXALL = 120;
+    function renderRegion(r){
+      var d = DATA[r] || DATA.all;
+      ['A','B','C'].forEach(function(k){
+        var v = d[k], diff = v - FORECAST[k];
+        var valEl = document.querySelector('.bar .val[data-band="'+k+'"]');
+        if(valEl){ valEl.textContent = v; valEl.parentElement.querySelector('.col').style.height = Math.round(v/MAXALL*100)+'%'; }
+        var cell = document.querySelector('[data-cell="'+k+'"]');           if(cell) cell.textContent = v;
+        var dcell = document.querySelector('[data-cell="'+k+'-diff"]');
+        if(dcell){
+          dcell.textContent = (diff>=0?'+':'')+diff;
+          dcell.classList.toggle('pos', diff>=0);
+          dcell.classList.toggle('neg', diff<0);
+        }
+      });
+    }
+    document.querySelectorAll('#regionseg button').forEach(function(b){
+      b.addEventListener('click', function(){
+        document.querySelectorAll('#regionseg button').forEach(function(x){ x.classList.remove('on'); });
+        b.classList.add('on');
+        renderRegion(b.getAttribute('data-region'));
+      });
+    });
+  </script>
+
+<!-- ===== Living Link comment layer markup =====
+     Chrome is consolidated into ONE floating dock (bottom center) + a status
+     stack above it. No more four-corner buttons. IDs are load-bearing: the
+     core wires #ll-handle/#ll-collapse/#ll-modebtn/#ll-readmode and writes
+     into #ll-modetxt/#ll-readtxt/#ll-handletxt/#ll-elsewhere/#ll-orphan. -->
+<div id="ll-status">
+  <div id="ll-orphan"></div>
+  <div id="ll-elsewhere"></div>
+</div>
+<div id="ll-dock">
+  <button id="ll-modebtn" title="Comment on a block">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8a6 6 0 1 1-2.1-4.55"/><path d="M8 5.5v5M5.5 8h5"/></svg>
+    <span id="ll-modetxt">Comment</span>
+  </button>
+  <button id="ll-readmode" title="Read every tab as one document">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 2.5h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3"/></svg>
+    <span id="ll-readtxt">Read as doc</span>
+  </button>
+  <span class="ll-dock-sep"></span>
+  <button id="ll-handle" title="Show the comment rail">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7a4.5 4.5 0 0 1-4.5 4.5H6l-3 2.5v-3.4A4.49 4.49 0 0 1 1.5 7 4.5 4.5 0 0 1 6 2.5h3A4.5 4.5 0 0 1 13.5 7z"/></svg>
+    <span id="ll-handletxt">Comments</span>
+  </button>
+  <button id="ll-collapse" title="Hide the comment rail">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7a4.5 4.5 0 0 1-4.5 4.5H6l-3 2.5v-3.4A4.49 4.49 0 0 1 1.5 7 4.5 4.5 0 0 1 6 2.5h3A4.5 4.5 0 0 1 13.5 7z"/><path d="M5.5 7h4"/></svg>
+    <span>Hide</span>
+  </button>
+</div>
+<div id="ll-rail"></div>
+<div id="ll-composer">
+  <div class="ll-ctx" id="ll-composerctx"></div>
+  <textarea id="ll-composertext" placeholder="Comment…  (Ctrl/⌘+Enter)"></textarea>
+  <div class="ll-row">
+    <button class="ll-btn" id="ll-cancel">Cancel</button>
+    <button class="ll-btn ll-pri" id="ll-save">Comment</button>
+  </div>
+</div>
+
+<script id="ll-anchoring">
+/* ===== Living Link — content-addressed anchoring (pure, no DOM) =====
+ *
+ * Replaces positional anchors (lla1, lla2 …) so a comment re-finds its block
+ * even after the artifact is regenerated and blocks move or change around it.
+ *
+ * A comment stores a durable TARGET descriptor:
+ *   { quote, hash, state, ordinal }
+ *     quote   — normalized text of the anchored block (the "text-quote")
+ *     hash    — FNV-1a of the quote (fast exact match)
+ *     state   — the state (tab) the comment was made in
+ *     ordinal — which occurrence, when several blocks share identical text
+ *
+ * resolve(target, blocks) re-finds the block, in order of confidence:
+ *   1. exact   — a block whose hash matches (ordinal/state breaks ties)
+ *   2. fuzzy   — best trigram-Dice similarity above THRESHOLD, same state first
+ *   3. orphaned— nothing close enough; flagged, never silently mis-anchored
+ *
+ * `blocks` is a plain array of { id, text, hash, state } — so this module is
+ * unit-testable in Node without a DOM. The core builds that array from the
+ * live document; the test builds it from string fixtures.
+ */
+(function(root){
+  var THRESHOLD = 0.6; // min trigram-Dice similarity to accept a fuzzy match
+
+  function normalize(s){
+    return (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
+  // FNV-1a 32-bit -> base36 string
+  function hashText(s){
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++){
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  }
+
+  function trigrams(s){
+    s = '  ' + s + '  ';
+    var t = [];
+    for (var i = 0; i < s.length - 2; i++) t.push(s.slice(i, i + 3));
+    return t;
+  }
+
+  // Sørensen–Dice coefficient over character trigrams (0..1)
+  function similarity(a, b){
+    if (a === b) return a ? 1 : 0;
+    if (!a || !b) return 0;
+    var A = trigrams(a), B = trigrams(b);
+    var counts = {}, inter = 0;
+    A.forEach(function(g){ counts[g] = (counts[g] || 0) + 1; });
+    B.forEach(function(g){ if (counts[g] > 0){ inter++; counts[g]--; } });
+    return (2 * inter) / (A.length + B.length);
+  }
+
+  function bestMatch(quote, list){
+    var bestId = null, bestScore = 0;
+    for (var i = 0; i < list.length; i++){
+      var s = similarity(list[i].text, quote);
+      if (s > bestScore){ bestScore = s; bestId = list[i].id; }
+    }
+    return { id: bestId, score: bestScore };
+  }
+
+  function resolve(target, blocks){
+    // 1. exact by hash
+    var exact = blocks.filter(function(b){ return b.hash === target.hash; });
+    if (exact.length){
+      var pick;
+      if (exact.length === 1){
+        pick = exact[0];
+      } else {
+        // disambiguate identical-text blocks: same state, then ordinal
+        var sameState = exact.filter(function(b){ return b.state === target.state; });
+        var pool = sameState.length ? sameState : exact;
+        pick = pool[Math.min(target.ordinal || 0, pool.length - 1)] || pool[0];
+      }
+      return { id: pick.id, status: 'exact', score: 1 };
+    }
+    // 2. fuzzy — prefer same state, fall back to whole document
+    var same = blocks.filter(function(b){ return b.state === target.state; });
+    var r = bestMatch(target.quote, same.length ? same : blocks);
+    if (r.score < THRESHOLD && same.length){
+      var rAll = bestMatch(target.quote, blocks);
+      if (rAll.score > r.score) r = rAll;
+    }
+    if (r.id && r.score >= THRESHOLD){
+      return { id: r.id, status: 'fuzzy', score: r.score };
+    }
+    // 3. orphaned
+    return { id: null, status: 'orphaned', score: r.score };
+  }
+
+  var API = {
+    THRESHOLD: THRESHOLD,
+    normalize: normalize,
+    hashText: hashText,
+    similarity: similarity,
+    resolve: resolve
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  else root.LivingLinkAnchor = API;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script id="ll-state">
+/* ===== Living Link — multi-axis state visibility (pure, no DOM) =====
+ *
+ * Generalizes the single-tab rule into an arbitrary state tuple. A comment
+ * records the value of every axis it was made in (c.state = {tab, region, …});
+ * an adapter declares the axes and, each render, reports their *current* value
+ * and whether they currently apply.
+ *
+ * The rule (a direct generalization of the standalone demo's isVisibleHere):
+ *   a comment is visible iff, for every axis that currently APPLIES and that the
+ *   comment RECORDED a value for, the recorded value equals the active value.
+ *
+ *   - A null/absent recorded value means the comment's block isn't governed by
+ *     that axis (e.g. a non-region-aware block ignores the region filter) — that
+ *     axis never hides it.
+ *   - An axis that doesn't currently apply (e.g. the tab axis in linear "read as
+ *     a document" mode) is skipped entirely — which is exactly how linear mode
+ *     falls out for free (P1.2).
+ *
+ * Pure and data-driven so it's unit-testable without a DOM: the core computes
+ * axisStates from the live adapter, the test passes plain objects.
+ */
+(function(root){
+
+  // commentState: { axisKey: recordedValue|null }
+  // axisStates:   [ { key, active: currentValue, applies: bool } ]
+  function isVisible(commentState, axisStates){
+    for (var i = 0; i < axisStates.length; i++){
+      var a = axisStates[i];
+      if (!a.applies) continue;                       // axis off (e.g. tab in linear mode)
+      var rec = commentState ? commentState[a.key] : null;
+      if (rec == null) continue;                      // block not governed by this axis
+      if (rec !== a.active) return false;             // wrong state on an applicable axis
+    }
+    return true;
+  }
+
+  // Human label for a comment's state, e.g. "Metrics · North".
+  // axisDefs: [ { key, label(value)? } ] — only axes with a recorded value show.
+  function stateLabel(commentState, axisDefs){
+    var parts = [];
+    for (var i = 0; i < axisDefs.length; i++){
+      var d = axisDefs[i];
+      var v = commentState ? commentState[d.key] : null;
+      if (v == null) continue;
+      parts.push(d.label ? d.label(v) : v);
+    }
+    return parts.join(' · ');
+  }
+
+  // The primary (structural) axis value — used for anchoring locality and the
+  // "elsewhere" grouping. By convention axes[0] is the structural one.
+  function primaryValue(commentState, axisDefs){
+    if (!commentState || !axisDefs.length) return null;
+    return commentState[axisDefs[0].key];
+  }
+
+  var API = { isVisible: isVisible, stateLabel: stateLabel, primaryValue: primaryValue };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  else root.LivingLinkState = API;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script id="ll-store">
+/* ===== Living Link — local persistence store =====
+ *
+ * The reference implementation of the STORE seam. The core treats the
+ * `comments` array as its working copy and talks to a store only through
+ * this interface — so a real backend (Liveblocks / Velt / custom API) can
+ * drop in later by satisfying the same five methods:
+ *
+ *   load(ns)            -> array of serialized comment records, or null
+ *   save(ns, records)   -> persist the full array for this artifact
+ *   getUser()           -> the reviewer's name, or null
+ *   setUser(name)       -> remember the reviewer's name
+ *   subscribe(ns, cb)   -> (optional) fire cb() on external changes; returns
+ *                          an unsubscribe fn. Local storage uses the cross-tab
+ *                          `storage` event so two tabs of the same file stay
+ *                          in sync — a tiny preview of multiplayer.
+ *
+ * Backed by localStorage. These artifacts are standalone HTML the reviewer
+ * opens directly in a browser (not sandboxed), so localStorage is available
+ * and appropriate. If it isn't (private mode, file:// quirks), every method
+ * degrades to an in-memory map so the layer still works for the session.
+ */
+(function(root){
+  var PREFIX = 'livinglink:';
+  var USER_KEY = PREFIX + 'user';
+
+  // probe localStorage; fall back to an in-memory shim if unusable
+  var mem = {};
+  var LS = (function(){
+    try {
+      var k = PREFIX + '__probe';
+      window.localStorage.setItem(k, '1');
+      window.localStorage.removeItem(k);
+      return window.localStorage;
+    } catch (e) {
+      return {
+        getItem: function(k){ return (k in mem) ? mem[k] : null; },
+        setItem: function(k, v){ mem[k] = String(v); },
+        removeItem: function(k){ delete mem[k]; }
+      };
+    }
+  })();
+
+  function nsKey(ns){ return PREFIX + 'doc:' + (ns || 'default'); }
+
+  function load(ns){
+    try {
+      var raw = LS.getItem(nsKey(ns));
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      return (parsed && Array.isArray(parsed.comments)) ? parsed.comments : null;
+    } catch (e) { return null; }
+  }
+
+  function save(ns, records){
+    try {
+      LS.setItem(nsKey(ns), JSON.stringify({ v: 1, comments: records || [] }));
+    } catch (e) { /* quota or unavailable — best effort */ }
+  }
+
+  function getUser(){
+    try { return LS.getItem(USER_KEY) || null; } catch (e) { return null; }
+  }
+  function setUser(name){
+    try { LS.setItem(USER_KEY, name); } catch (e) { /* ignore */ }
+  }
+
+  function subscribe(ns, cb){
+    if (typeof window === 'undefined' || !window.addEventListener) return function(){};
+    var key = nsKey(ns);
+    var handler = function(ev){ if (ev.key === key) cb(); };
+    window.addEventListener('storage', handler);
+    return function(){ window.removeEventListener('storage', handler); };
+  }
+
+  var API = { load: load, save: save, getUser: getUser, setUser: setUser, subscribe: subscribe };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  else root.LivingLinkStore = API;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script id="ll-core">
+/* ===== Living Link comment layer — core =====
+ *
+ * Host-agnostic. Knows nothing about tabs, .tab-panel, or switchTab.
+ * It talks to the host document only through an adapter passed to
+ * LivingLink.init(adapter). See src/adapters/tabpanel.js (single axis) and
+ * src/adapters/tabpanel-region.js (two axes) for reference adapters.
+ *
+ * The adapter declares an arbitrary STATE TUPLE as a list of axes (P1.1).
+ * Each axis is:
+ *   { key,                       // e.g. 'tab', 'region'
+ *     active(),                  // the axis's current value
+ *     of(el),                    // value a block structurally belongs to (or null)
+ *     record(el),               // value to stamp on a comment made on this block
+ *     label(value),              // human label
+ *     applies() }                // is this axis currently governing visibility?
+ *                                //   (linear "read as doc" mode = tab.applies()->false, P1.2)
+ * Plus: adapter.axes (array, axes[0] is the structural one), adapter.selector,
+ * adapter.controlSelector, adapter.onStateChange(cb), adapter.getSeeds().
+ *
+ * A comment carries c.state = { axisKey: recordedValue }. The single rule that
+ * everything hangs off is visible() — now delegated to the pure, multi-axis
+ * LivingLinkState.isVisible (src/state.js).
+ */
+window.LivingLink = (function(){
+  var ADAPTER=null, STORE=null, NS='artifact';
+  var LLA=(typeof window!=='undefined'?window.LivingLinkAnchor:null); // anchoring module
+  var LLS=(typeof window!=='undefined'?window.LivingLinkState:null);  // visibility module
+  var ME=null, PEER="Amin";                       // ME resolved from the store on init
+  var COLOR={"You":"#c0392b","Amin":"#2c6e9c"};   // seed authors keep fixed colors
+  var state={open:false, commenting:false, selected:null, linear:false};
+  var anchors={}, blockIndex=[], comments=[], uid=0;
+  var $=function(s,r){return (r||document).querySelector(s);};
+  var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+  function nid(){return "ll"+Date.now().toString(36)+"-"+(++uid);}  // collision-safe across sessions
+  function esc(s){return s.replace(/[&<>"]/g,function(m){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[m];});}
+  // deterministic avatar color for any name (fixed for seed authors)
+  function colorFor(w){ if(COLOR[w]) return COLOR[w]; var h=0; for(var i=0;i<w.length;i++){h=(h*31+w.charCodeAt(i))>>>0;} return 'hsl('+(h%360)+',45%,42%)'; }
+  function av(w){return '<span class="ll-av" style="background:'+colorFor(w)+'">'+(w||'?').slice(0,1).toUpperCase()+'</span>';}
+
+  // ---- identity: a lightweight, locally-remembered name (P1.4 v1) ----
+  function ensureUser(){
+    if(ME) return ME;
+    var name=null;
+    try{ name=window.prompt('Your name (shown on your comments):',''); }catch(e){}
+    name=(name||'').trim()||'Guest';
+    ME=name; if(STORE && STORE.setUser) STORE.setUser(name);
+    return ME;
+  }
+
+  // ---- persistence: serialize the durable parts only (runtime anchor/el are
+  // re-resolved on load via content-addressed targets) ----
+  function serialize(){
+    return comments.map(function(c){
+      return {id:c.id, target:c.target, state:c.state, resolved:!!c.resolved, thread:c.thread};
+    });
+  }
+  function persist(){ if(STORE && STORE.save) STORE.save(NS, serialize()); }
+
+  // ---- host state, via the adapter's axes ----
+  function axes(){ return ADAPTER.axes; }
+  function primaryAxis(){ return ADAPTER.axes[0]; }            // the structural axis (e.g. tab)
+  function primaryOf(el){ return primaryAxis().of(el); }       // which structural state a block lives in
+  // current value + applicability of every axis, for the pure visibility rule
+  function axisStates(){ return axes().map(function(a){ return {key:a.key, active:a.active(), applies:a.applies?a.applies():true}; }); }
+  // axis defs (key + label fn) for building human state labels
+  function axisDefs(){ return axes().map(function(a){ return {key:a.key, label:a.label}; }); }
+  // stamp the active state tuple onto a comment made on `block`
+  function captureState(block){
+    var s={}; axes().forEach(function(a){ s[a.key]= a.record ? a.record(block) : a.of(block); }); return s;
+  }
+  function stateLabelOf(c){ return LLS.stateLabel(c.state, axisDefs()); }
+  function primaryValue(c){ return LLS.primaryValue(c.state, axisDefs()); }
+  function primaryLabel(v){ return primaryAxis().label ? primaryAxis().label(v) : v; }
+
+  // ---- content-addressed anchoring ----
+  // Each block's id is derived from a hash of its normalized text (with an
+  // ordinal suffix when several blocks share identical text), not its DOM
+  // position. We also build a flat blockIndex the anchoring module resolves
+  // comment targets against, so a comment re-finds its block after the
+  // artifact is regenerated. See src/anchoring.js.
+  function initAnchors(){
+    anchors={}; blockIndex=[];
+    var seen={};
+    $$(ADAPTER.selector).forEach(function(el){
+      if(el.parentElement && el.parentElement.closest('[data-ll]')) return; // skip nested
+      var text=LLA.normalize(el.innerText||'');
+      var hash=LLA.hashText(text);
+      var ord=(seen[hash]==null)?0:(seen[hash]+1); seen[hash]=ord;
+      var id='a'+hash+(ord?('-'+ord):'');
+      el.setAttribute('data-ll',id);
+      var stateKey=primaryOf(el);                 // anchoring locality uses the structural axis
+      anchors[id]={el:el, state:stateKey};
+      blockIndex.push({id:id, text:text, hash:hash, state:stateKey, ordinal:ord});
+    });
+  }
+
+  // durable descriptor stored on a comment so it survives regeneration.
+  // `state` here is the structural (primary) axis value, for anchoring locality.
+  function makeTarget(id){
+    for(var i=0;i<blockIndex.length;i++){
+      if(blockIndex[i].id===id){ var b=blockIndex[i];
+        return {quote:b.text, hash:b.hash, state:b.state, ordinal:b.ordinal}; }
+    }
+    var a=anchors[id]; var text=a?LLA.normalize(a.el.innerText||''):'';
+    return {quote:text, hash:LLA.hashText(text), state:a?a.state:null, ordinal:0};
+  }
+
+  // re-resolve a comment's target to a live block; flag if orphaned.
+  // Updates only the structural axis from the resolved block; other axes
+  // (e.g. region) were captured at creation and are preserved.
+  function resolveComment(c){
+    if(!c.target) return;
+    var r=LLA.resolve(c.target, blockIndex);
+    if(r.id){ c.anchor=r.id; if(!c.state) c.state={}; c.state[primaryAxis().key]=anchors[r.id].state; c.orphaned=false; c.match=r.status; }
+    else { c.anchor=null; c.orphaned=true; c.match='orphaned'; }
+  }
+  function snippet(id){ var a=anchors[id]; if(!a) return id;
+    var t=(a.el.innerText||'').replace(/\s+/g,' ').trim();
+    return t.length>56 ? t.slice(0,56)+'…' : (t||id); }
+
+  // ---- the one rule everything hangs off — now multi-axis (P1.1) ----
+  function visible(c){ return LLS.isVisible(c.state, axisStates()); }
+
+  // ---- seed demo comments supplied by the adapter ----
+  function seedFromAdapter(){
+    if(!ADAPTER.getSeeds) return;
+    ADAPTER.getSeeds().forEach(function(s){
+      if(!s.anchor) return;
+      // s.state is the captured state tuple, e.g. {tab:'overview'} or {tab,region}
+      var st = (s.state && typeof s.state==='object') ? s.state : captureState(anchors[s.anchor].el);
+      var c={id:nid(), anchor:s.anchor, state:st, resolved:false, thread:[{who:s.who, text:s.text}]};
+      c.target=makeTarget(s.anchor);   // durable reference for regeneration
+      comments.push(c);
+    });
+  }
+
+  // ---- render the margin rail ----
+  function render(){
+    var rail=$('#ll-rail'); rail.innerHTML='';
+    $$('.ll-anchored').forEach(function(e){e.classList.remove('ll-anchored');});
+
+    var vis=comments.filter(visible);
+    vis.forEach(function(c){
+      var a=anchors[c.anchor]; if(!a) return;
+      if(c.id===state.selected) a.el.classList.add('ll-anchored');
+      var head=c.thread[0];
+      var replies=c.thread.slice(1).map(function(r){
+        return '<div class="ll-reply"><div class="ll-who">'+av(r.who)+r.who+'</div>'+esc(r.text)+'</div>'; }).join('');
+      var card=document.createElement('div');
+      card.className='ll-card'+(c.resolved?' ll-resolved':'')+(c.id===state.selected?' ll-sel':'');
+      card.setAttribute('data-anchor', c.anchor); card.setAttribute('data-id', c.id);
+      var expanded=(c.id===state.selected);
+      card.innerHTML=
+        '<div class="ll-snip">“'+esc(snippet(c.anchor))+'”</div>'+
+        '<div class="ll-top"><div class="ll-who">'+av(head.who)+head.who+'</div>'+
+          '<span class="ll-badge">'+esc(stateLabelOf(c))+(c.resolved?' · done':'')+'</span></div>'+
+        '<div class="ll-text">'+esc(head.text)+'</div>'+
+        (expanded?replies:(c.thread.length>1?'<div class="ll-snip">'+(c.thread.length-1)+' more repl'+(c.thread.length>2?'ies':'y')+'…</div>':''))+
+        (expanded?(
+          '<div class="ll-actions">'+
+            '<button class="ll-btn" data-act="reply">Reply</button>'+
+            '<button class="ll-btn" data-act="resolve">'+(c.resolved?'Reopen':'Resolve')+'</button>'+
+          '</div>'+
+          '<div class="ll-replybox"><input type="text" placeholder="Reply… (Enter)"></div>'):'');
+      card.addEventListener('click', function(ev){
+        if(ev.target.closest('[data-act]')||ev.target.tagName==='INPUT') return;
+        select(c.id);
+      });
+      if(expanded){
+        card.querySelector('[data-act="resolve"]').addEventListener('click',function(ev){
+          ev.stopPropagation(); c.resolved=!c.resolved; if(c.resolved&&state.selected===c.id)state.selected=null; persist(); render(); });
+        var rb=card.querySelector('[data-act="reply"]'), box=card.querySelector('.ll-replybox'), inp=box.querySelector('input');
+        rb.addEventListener('click',function(ev){ ev.stopPropagation(); box.classList.toggle('ll-show'); inp.focus(); });
+        inp.addEventListener('keydown',function(ev){ if(ev.key==='Enter'&&inp.value.trim()){ c.thread.push({who:ensureUser(),text:inp.value.trim()}); inp.value=''; persist(); render(); }});
+      }
+      rail.appendChild(card);
+    });
+    layout();
+    elsewhere();
+    orphans();
+    handleCount();
+  }
+
+  // ---- vertical alignment with collision avoidance (the Docs trick) ----
+  // The rail is viewport-fixed, so cards align to each anchor's *viewport*
+  // position (no scrollY) and re-layout on scroll — comments track their
+  // blocks as you scroll, exactly like Docs, and live in their own gutter.
+  function layout(){
+    var rail=$('#ll-rail'); if(!state.open) return;
+    var cards=$$('.ll-card', rail).map(function(c){
+      var a=anchors[c.getAttribute('data-anchor')];
+      var y=a? a.el.getBoundingClientRect().top : 0;
+      return {c:c, y:y};
+    });
+    cards.sort(function(p,q){return p.y-q.y;});
+    var prevB=8;
+    cards.forEach(function(it){
+      var top=Math.max(it.y, prevB+10);
+      it.c.style.top=top+'px';
+      prevB=top+it.c.offsetHeight;
+    });
+  }
+
+  function select(id){ state.selected=id; if(!state.open) setOpen(true); render();
+    var a=anchors[(comments.find(function(c){return c.id===id;})||{}).anchor];
+    if(a){ a.el.scrollIntoView({behavior:'smooth',block:'center'}); a.el.classList.remove('ll-flash'); void a.el.offsetWidth; a.el.classList.add('ll-flash'); }
+  }
+
+  function elsewhere(){
+    var box=$('#ll-elsewhere');
+    var groups={};
+    // group hidden, unresolved comments by their structural (primary) state value
+    comments.forEach(function(c){ if(!visible(c)&&!c.resolved){ var k=primaryValue(c); if(k!=null) groups[k]=(groups[k]||0)+1; }});
+    var keys=Object.keys(groups); if(!keys.length){ box.classList.remove('ll-show'); return; }
+    var total=keys.reduce(function(s,t){return s+groups[t];},0);
+    var noun=(primaryAxis().elsewhereNoun)||'other states';
+    box.innerHTML='<b>'+total+'</b> comment'+(total>1?'s':'')+' on '+noun+' — '+
+      keys.map(function(t){return groups[t]+' on “'+esc(primaryLabel(t))+'”';}).join(', ')+'.';
+    box.classList.add('ll-show');
+  }
+  // orphaned comments: block could not be re-found after regeneration.
+  // Flagged here, never silently mis-anchored (P0.2).
+  function orphans(){
+    var box=$('#ll-orphan');
+    var lost=comments.filter(function(c){return c.orphaned&&!c.resolved;});
+    if(!lost.length){ box.classList.remove('ll-show'); box.title=''; return; }
+    box.innerHTML='⚠ <b>'+lost.length+'</b> comment'+(lost.length>1?'s':'')+
+      ' lost their block after an edit — re-anchor needed.';
+    box.title=lost.map(function(c){return '• “'+(c.target?c.target.quote:'')+'” — '+c.thread[0].who+': '+c.thread[0].text;}).join('\n');
+    box.classList.add('ll-show');
+  }
+  function handleCount(){
+    var n=comments.filter(function(c){return !c.resolved;}).length;
+    $('#ll-handletxt').textContent=n?'Comments · '+n:'Comments';
+  }
+
+  // ---- composer ----
+  var pending=null;
+  function openComposer(el,ev){
+    pending=el.getAttribute('data-ll');
+    var label=stateLabelOf({state:captureState(el)});
+    $('#ll-composerctx').innerHTML='on: <b>'+esc(snippet(pending))+'</b>'+(label?'<br>state: <b>'+esc(label)+'</b>':'');
+    var c=$('#ll-composer'); c.style.display='block';
+    var w=290,h=170,pad=12;
+    c.style.left=Math.max(pad,Math.min(ev.clientX, window.innerWidth-w-pad))+'px';
+    c.style.top=Math.max(pad,Math.min(ev.clientY, window.innerHeight-h-pad))+'px';
+    var t=$('#ll-composertext'); t.value=''; t.focus();
+  }
+  function closeComposer(){ $('#ll-composer').style.display='none'; pending=null; }
+  function wireComposer(){
+    $('#ll-save').addEventListener('click',function(){
+      var txt=$('#ll-composertext').value.trim(); if(!txt||!pending){closeComposer();return;}
+      var who=ensureUser();
+      var c={id:nid(), anchor:pending, state:captureState(anchors[pending].el), resolved:false, thread:[{who:who,text:txt}]};
+      c.target=makeTarget(pending);   // durable reference for regeneration
+      comments.push(c); persist(); closeComposer(); if(!state.open) setOpen(true); state.selected=c.id; render();
+    });
+    $('#ll-cancel').addEventListener('click',closeComposer);
+    $('#ll-composertext').addEventListener('keydown',function(ev){
+      if(ev.key==='Enter'&&(ev.metaKey||ev.ctrlKey)) $('#ll-save').click();
+      if(ev.key==='Escape') closeComposer(); });
+
+    document.addEventListener('click',function(ev){
+      if(!state.commenting) return;
+      if(ev.target.closest('#ll-composer')||ev.target.closest('#ll-rail')||
+         (ADAPTER.controlSelector&&ev.target.closest(ADAPTER.controlSelector))||
+         ev.target.closest('#ll-dock')) return;
+      var block=ev.target.closest('[data-ll]');
+      // commentable if the block is currently visible: either the structural
+      // axis is off (linear mode shows all) or the block is in the active state
+      var pa=primaryAxis();
+      if(block && ((pa.applies&&!pa.applies()) || primaryOf(block)===pa.active())) openComposer(block,ev); else closeComposer();
+    });
+  }
+
+  // ---- toggles ----
+  function setOpen(v){ state.open=v; document.body.classList.toggle('ll-open',v); render(); }
+  function setCommenting(v){ state.commenting=v; document.body.classList.toggle('ll-commenting',v);
+    $('#ll-modebtn').classList.toggle('ll-on',v); $('#ll-modetxt').textContent=v?'Commenting':'Comment'; }
+  // linear "read as a document" mode (P1.2): flip the tab axis off (the adapter's
+  // tab.applies() reads body.ll-linear) and let the adapter stitch the panels.
+  function setLinear(v){
+    state.linear=v; state.selected=null;
+    document.body.classList.toggle('ll-linear',v);
+    $('#ll-readmode').classList.toggle('ll-on',v);
+    $('#ll-readtxt').textContent=v?'Back to tabs':'Read as doc';
+    if(ADAPTER.linearLayout) ADAPTER.linearLayout(v);
+    render();
+  }
+  function wireToggles(){
+    $('#ll-handle').addEventListener('click',function(){ setOpen(true); });
+    $('#ll-collapse').addEventListener('click',function(){ setOpen(false); });
+    $('#ll-modebtn').addEventListener('click',function(){ setCommenting(!state.commenting); });
+    $('#ll-readmode').addEventListener('click',function(){ setLinear(!state.linear); });
+    if(ADAPTER.linearLayout) $('#ll-readmode').classList.add('ll-avail'); // only if supported
+  }
+
+  // ---- host state change ----
+  function onStateChange(){ state.selected=null; render(); }
+
+  var memStore={load:function(){return null;}, save:function(){}, getUser:function(){return null;}, setUser:function(){}, subscribe:function(){return function(){};}};
+
+  function loadFromStore(){
+    var saved=STORE.load?STORE.load(NS):null;
+    if(saved && saved.length){
+      comments=saved.map(function(r){
+        // migrate older single-axis records (r.tab) to a state tuple
+        var st = r.state || (r.tab!=null ? {tab:r.tab} : (r.target&&r.target.state!=null ? {tab:r.target.state} : {}));
+        return {id:r.id, target:r.target, state:st, resolved:!!r.resolved, thread:r.thread||[]};
+      });
+      return true;
+    }
+    return false;
+  }
+
+  // load persisted comments (if any), else seed once on first visit
+  function bootstrapComments(){
+    if(loadFromStore()){
+      comments.forEach(resolveComment);            // re-find blocks via content anchors
+    } else if(STORE.seedOnEmpty!==false){          // managed shared rooms opt out of demo seeds
+      seedFromAdapter();
+      comments.forEach(resolveComment);
+      persist();
+    }
+  }
+
+  // ---- go ----
+  function init(adapter, store){
+    ADAPTER=adapter;
+    STORE=store || (typeof window!=='undefined' && window.LivingLinkStore) || memStore;
+    NS=(typeof location!=='undefined' && location.pathname) || 'artifact';
+    ME=STORE.getUser ? STORE.getUser() : null;
+    wireComposer();
+    wireToggles();
+    ADAPTER.onStateChange(onStateChange);
+    window.addEventListener('resize', layout);
+    window.addEventListener('scroll', layout, {passive:true});
+    initAnchors();
+
+    var onRemote=function(){ if(loadFromStore()){ comments.forEach(resolveComment); render(); } };
+
+    if(typeof STORE.connect==='function'){
+      // managed/async backend (Liveblocks, Velt): paint immediately, then
+      // hydrate when the shared room connects, and re-render on remote changes.
+      setOpen(true); render();
+      Promise.resolve(STORE.connect(NS, onRemote)).then(function(){
+        bootstrapComments(); render();
+      });
+    } else {
+      // sync backend (local store / in-memory); subscribe = cross-tab sync
+      bootstrapComments();
+      if(STORE.subscribe) STORE.subscribe(NS, onRemote);
+      setOpen(true); render();
+    }
+  }
+
+  return { init: init };
+})();
+
+</script>
+<script id="ll-adapter">
+/* ===== Living Link adapter — demo-metrics.html (tab + region, seeded) =====
+ *
+ * The live two-axis demo adapter. Same shape as src/adapters/tabpanel-region.js
+ * (the reusable template), plus demo seed comments placed across (tab, region)
+ * states so the artifact opens with a conversation that shows the multi-axis
+ * rule in action:
+ *
+ *   - switch to Metrics, toggle North / South / All, and region-tagged comments
+ *     appear only in their region;
+ *   - a region-null comment stays visible under every region;
+ *   - the "elsewhere" banner counts comments in the tab/region you're not in.
+ */
+(function(){
+
+  // ---- axis 1: tab (structural) ----
+  function tabActive(){ var p=document.querySelector('.tab-panel.active'); return p? p.id.replace(/^tab-/,'') : null; }
+  function tabOf(el){ var p=el.closest('.tab-panel'); return p? p.id.replace(/^tab-/,'') : null; }
+  function tabLabel(t){ var b=document.querySelector('.tab-btn[onclick*="\''+t+'\'"]'); return b? b.textContent.trim() : t; }
+
+  // ---- axis 2: region (view filter) ----
+  function regionActive(){ var b=document.querySelector('#regionseg [data-region].on'); return b? b.getAttribute('data-region') : 'all'; }
+  function regionAware(el){ return !!(el.closest && el.closest('[data-region-aware]')); }
+  function regionRecord(el){ return regionAware(el) ? regionActive() : null; }
+  function regionLabel(r){ return r ? (r.charAt(0).toUpperCase()+r.slice(1)) : r; }
+
+  var tabAxis={ key:'tab', active:tabActive, of:tabOf, record:tabOf, label:tabLabel, applies:function(){return !document.body.classList.contains('ll-linear');}, elsewhereNoun:'other tabs/regions' };
+  var regionAxis={ key:'region', active:regionActive, of:function(){return null;}, record:regionRecord, label:regionLabel, applies:function(){return true;} };
+
+  // stitch all panels into one scroll for linear "read as a document" mode
+  function linearLayout(on){
+    Array.prototype.slice.call(document.querySelectorAll('.tab-panel')).forEach(function(p){ p.style.display = on?'block':''; });
+    Array.prototype.slice.call(document.querySelectorAll('.tab-btn')).forEach(function(b){ b.style.display = on?'none':''; });
+  }
+
+  function onStateChange(cb){
+    if(typeof window.switchTab==='function'){ var _st=window.switchTab; window.switchTab=function(){ _st.apply(this,arguments); cb(); }; }
+    Array.prototype.slice.call(document.querySelectorAll('.tab-btn, #regionseg [data-region]')).forEach(function(b){
+      b.addEventListener('click', function(){ setTimeout(cb,0); });
+    });
+  }
+
+  // ---- demo seeds (resolve substrings to anchors within a tab panel) ----
+  function findIn(tab, substr){
+    var panel=document.getElementById('tab-'+tab); if(!panel) return null;
+    var els=panel.querySelectorAll('[data-ll]');
+    for(var i=0;i<els.length;i++){ if((els[i].innerText||'').indexOf(substr)>=0) return els[i].getAttribute('data-ll'); }
+    return null;
+  }
+  function getSeeds(){
+    // [tab, region|null, substring, who, text]
+    // Region seeds anchor to stable band labels; the block persists across
+    // region switches (only its number updates in place), so the anchor holds.
+    var s=[
+      ["summary", null,    "recovery is uneven", "Amin", "Lead with this line — the uneven recovery is the story for the review."],
+      ["metrics", "north", "Band A",             "Amin", "In North, Band A is well under forecast — worth a callout."],
+      ["metrics", "south", "Band B",             "You",  "South's Band B holds up better than the rest — note it here."],
+      ["metrics", null,    "forecast line is fixed", "You", "This note applies in every region — keep it general."],
+      ["plan",    null,    "daily logs",         "Amin", "Agreed. I'll own pulling the logs before Thursday."]
+    ];
+    return s.map(function(x){
+      var state = x[1] ? {tab:x[0], region:x[1]} : {tab:x[0]};
+      return { anchor:findIn(x[0], x[2]), state:state, who:x[3], text:x[4] };
+    });
+  }
+
+  var adapter={
+    selector:'.tab-panel h2,.tab-panel h3,.tab-panel h4,.tab-panel p,.tab-panel li,'+
+             '.tab-panel td,.tab-panel th,.tab-panel .bar,.tab-panel .note',
+    controlSelector:'.tab-btn, #regionseg [data-region]',
+    axes:[tabAxis, regionAxis],
+    linearLayout:linearLayout,
+    onStateChange:onStateChange,
+    getSeeds:getSeeds
+  };
+
+  if (typeof window !== 'undefined' && window.__LL_MANUAL_INIT__) {
+    window.LivingLinkPendingAdapter = adapter;
+  } else {
+    LivingLink.init(adapter);
+  }
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LivingLink — Design System</title>
+<style>
+  :root{
+    --ink:#16171D; --ink-2:#4A4D5A; --muted:#8A8E9C;
+    --paper:#F7F5F0; --card:#FFFFFF; --line:#E7E4DC; --line-2:#D8D4C9;
+    --iris:#635BFF; --iris-soft:#EFEEFF; --marker:#FFD54A; --marker-soft:#FFF3CC;
+    --ok:#1A7A3A; --warn:#B97D10; --crit:#CD3D64;
+    --r:12px;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Inter",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font);background:var(--paper);color:var(--ink);
+    font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+
+  .shell{display:grid;grid-template-columns:230px 1fr;gap:40px;max-width:1180px;margin:0 auto;padding:40px 32px 120px;}
+  @media(max-width:860px){.shell{grid-template-columns:1fr;}}
+
+  /* sidebar */
+  aside{position:sticky;top:40px;align-self:start;}
+  .brandhead{display:flex;align-items:center;gap:10px;margin-bottom:26px;font-weight:700;font-size:16px;letter-spacing:-.02em;}
+  .brandhead svg{width:30px;height:30px;}
+  aside nav{display:flex;flex-direction:column;gap:2px;font-size:13.5px;}
+  aside nav span{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px 12px;}
+  aside nav a{color:var(--ink-2);text-decoration:none;padding:7px 12px;border-radius:8px;font-weight:500;}
+  aside nav a:hover{background:#EFEDE6;color:var(--ink);}
+
+  /* main */
+  h1{font-size:30px;font-weight:700;letter-spacing:-.025em;margin:0 0 6px;}
+  .lede{color:var(--ink-2);max-width:560px;margin:0 0 14px;}
+  h2{font-size:19px;font-weight:650;letter-spacing:-.015em;margin:54px 0 4px;}
+  .note{color:var(--muted);font-size:13px;margin:0 0 18px;}
+  section{scroll-margin-top:24px;}
+
+  .grid{display:grid;gap:14px;}
+  .g2{grid-template-columns:repeat(2,1fr);} .g3{grid-template-columns:repeat(3,1fr);} .g4{grid-template-columns:repeat(4,1fr);}
+  @media(max-width:860px){.g3,.g4{grid-template-columns:repeat(2,1fr);}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;}
+  .card h3{font-size:13.5px;font-weight:600;margin:0 0 2px;}
+  .card .sub{font-size:12px;color:var(--muted);margin:0 0 12px;}
+
+  /* logo cells */
+  .logocell{display:flex;flex-direction:column;gap:10px;}
+  .logocell .stage{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px 14px;display:flex;align-items:center;justify-content:center;min-height:96px;}
+  .logocell img{width:100%;max-width:330px;display:block;}
+  .pick{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--iris);background:var(--iris-soft);border-radius:999px;padding:2px 8px;margin-left:6px;}
+
+  /* color swatches */
+  .swatch{border-radius:10px;border:1px solid var(--line);overflow:hidden;}
+  .swatch .chip{height:64px;}
+  .swatch .meta{padding:9px 12px;background:var(--card);font-size:12px;}
+  .swatch .meta b{display:block;font-size:12.5px;}
+  .swatch .meta code{color:var(--muted);font-size:11px;}
+
+  /* type scale */
+  .typerow{display:flex;align-items:baseline;gap:18px;padding:13px 0;border-bottom:1px solid var(--line);}
+  .typerow:last-child{border-bottom:none;}
+  .typerow .spec{width:200px;flex:none;font-size:11.5px;color:var(--muted);}
+
+  /* icons */
+  .iconrow{display:flex;gap:10px;flex-wrap:wrap;}
+  .icontile{width:52px;height:52px;border-radius:12px;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink);}
+  .icontile svg{width:20px;height:20px;}
+
+  /* component samples */
+  .stagewide{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:22px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;}
+  .ll-card-sample{width:300px;background:#fff;border:1px solid #E3E8EE;border-radius:12px;box-shadow:0 1px 3px rgba(26,31,54,.08);padding:13px 15px;font-size:13px;line-height:1.5;text-align:left;}
+  .snip{font-size:11.5px;color:#8792A2;margin-bottom:8px;background:#F7F8FA;border-left:2px solid var(--iris);padding:5px 9px;border-radius:0 6px 6px 0;}
+  .who{display:flex;align-items:center;gap:7px;font-weight:600;font-size:12.5px;margin-bottom:4px;}
+  .av{width:22px;height:22px;border-radius:50%;background:var(--iris);color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #fff,0 1px 2px rgba(0,0,0,.15);}
+  .badge{font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5851E6;background:#F0EFFF;border-radius:999px;padding:2.5px 8px;margin-left:auto;}
+  .cmt{color:#4F566B;margin:4px 0 6px;}
+  .acts{display:flex;gap:6px;margin-top:8px;}
+  .ghost{font-size:11.5px;font-weight:500;border:1px solid transparent;background:#F7F8FA;color:#4F566B;padding:4.5px 11px;border-radius:7px;}
+  .pri{background:var(--iris);color:#fff;}
+
+  .docksample{display:inline-flex;align-items:center;gap:2px;padding:5px;background:rgba(255,255,255,.82);
+    backdrop-filter:blur(18px) saturate(170%);border:1px solid #E3E8EE;border-radius:999px;box-shadow:0 4px 14px rgba(26,31,54,.12);}
+  .docksample button{display:inline-flex;align-items:center;gap:7px;border:none;background:transparent;color:#4F566B;
+    font-family:var(--font);font-size:12.5px;font-weight:500;padding:8px 14px;border-radius:999px;cursor:pointer;}
+  .docksample button:hover{background:#F7F8FA;color:var(--ink);}
+  .docksample button.on{background:var(--iris);color:#fff;}
+  .docksample svg{width:15px;height:15px;}
+  .docksep{width:1px;height:18px;background:#E3E8EE;margin:0 3px;}
+  .chipsample{display:inline-block;background:#F0EFFF;border:1px solid #E3E8EE;color:#5851E6;border-radius:999px;padding:6px 14px;font-size:11.5px;font-weight:500;}
+
+  /* chrome before/after */
+  .frame{position:relative;background:var(--card);border:1px solid var(--line);border-radius:10px;height:190px;font-size:9px;color:var(--muted);}
+  .frame .tag{position:absolute;background:var(--crit);color:#fff;border-radius:5px;padding:2px 7px;font-weight:600;}
+  .frame .tag.good{background:var(--ok);}
+  .frame .ttl{position:absolute;top:8px;left:10px;font-size:10px;font-weight:600;color:var(--ink-2);}
+  .hl{background:var(--marker-soft);border-radius:4px;padding:0 4px;box-decoration-break:clone;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+  th{font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--line-2);}
+  td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--ink-2);vertical-align:top;}
+  td b{color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <aside>
+    <div class="brandhead">
+      <svg viewBox="0 0 80 96"><defs><mask id="llnotch-desi-1" maskUnits="userSpaceOnUse" x="0" y="0" width="80" height="96"><rect x="0" y="0" width="80" height="96" fill="#fff"/><circle cx="61" cy="17" r="12.5" fill="#000"/></mask></defs><path d="M26 18 h28 a10 10 0 0 1 10 10 v12 a10 10 0 0 1 -10 10 h-14 l-10 9 v-9 h-4 a10 10 0 0 1 -10 -10 v-12 a10 10 0 0 1 10 -10 z" fill="none" stroke="#16171D" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round" mask="url(#llnotch-desi-1)"/><circle cx="61" cy="17" r="7" fill="#635BFF"/><rect x="14" y="68" width="52" height="10" rx="5" fill="#FFD54A"/></svg>
+      LivingLink
+    </div>
+    <nav>
+      <span>Brand kit</span>
+      <a href="#logos">Logo</a>
+      <a href="#color">Color palette</a>
+      <a href="#type">Typography</a>
+      <a href="#icons">Iconography</a>
+      <a href="#components">Components</a>
+      <a href="#chrome">Layer chrome</a>
+      <a href="#voice">Usage &amp; voice</a>
+    </nav>
+  </aside>
+
+  <main>
+    <h1>LivingLink Design System</h1>
+    <p class="lede">Light, refined, never over-designed. One ink, one paper, one accent, one marker — the product's own highlight is the brand's only flourish.</p>
+
+    <section id="logos">
+      <h2>Logo</h2>
+      <p class="note">The Anchored Comment — a bubble standing on a marker stroke, with the iris dot nested in a punched-out notch. Canonical files in <code>assets/brand/</code>: <code>logo.svg</code>, <code>logo-mark.svg</code>, <code>logo-inverse.svg</code>, <code>logo-mono.svg</code>, <code>app-icon.svg</code>. Final wordmark wants a geometric grotesk (Inter Tight / General Sans); system stack used for the spec.</p>
+
+      <div class="card logocell"><h3>Primary lockup</h3><p class="sub">Default for all light surfaces. The notch is part of the mark — it ships in the file, never redrawn.</p>
+        <div class="stage" style="min-height:150px;"><img src="assets/brand/logo.svg" alt="LivingLink primary lockup" style="max-width:380px;"></div>
+      </div>
+
+      <div class="grid g3" style="margin-top:14px;">
+        <div class="card logocell"><h3>On dark</h3><p class="sub">White ink, accents hold.</p><div class="stage" style="background:#16171D;border-color:#16171D;"><img src="assets/brand/logo-inverse.svg" alt=""></div></div>
+        <div class="card logocell"><h3>One color</h3><p class="sub">Print, emboss, single-ink contexts.</p><div class="stage"><img src="assets/brand/logo-mono.svg" alt=""></div></div>
+        <div class="card logocell"><h3>Mark alone</h3><p class="sub">Below 120px width, or as avatar/favicon.</p><div class="stage"><img src="assets/brand/logo-mark.svg" alt="" style="max-width:64px;"></div></div>
+      </div>
+
+      <div class="grid g2" style="margin-top:14px;">
+        <div class="card logocell"><h3>Clearspace</h3><p class="sub">x = the marker stroke height. Keep at least 1x of clear space on all sides; nothing enters the box.</p>
+          <div class="stage" style="min-height:170px;">
+            <svg viewBox="0 0 360 130" style="width:100%;max-width:330px;">
+              <rect x="30" y="14" width="300" height="102" fill="none" stroke="#CD3D64" stroke-width="1" stroke-dasharray="4 4"/>
+              <g transform="translate(50,28) scale(0.62)"><defs><mask id="llcs" maskUnits="userSpaceOnUse" x="0" y="0" width="440" height="96"><rect x="0" y="0" width="440" height="96" fill="#fff"/><circle cx="61" cy="17" r="12.5" fill="#000"/></mask></defs><path d="M26 18 h28 a10 10 0 0 1 10 10 v12 a10 10 0 0 1 -10 10 h-14 l-10 9 v-9 h-4 a10 10 0 0 1 -10 -10 v-12 a10 10 0 0 1 10 -10 z" fill="none" stroke="#16171D" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round" mask="url(#llcs)"/><circle cx="61" cy="17" r="7" fill="#635BFF"/><rect x="14" y="68" width="52" height="10" rx="5" fill="#FFD54A"/><text x="88" y="62" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif" font-size="40" font-weight="700" letter-spacing="-1.5" fill="#16171D">LivingLink</text></g>
+              <rect x="30" y="2" width="10" height="10" fill="#FFD54A"/><text x="44" y="11" font-size="9" fill="#8A8E9C" font-family="sans-serif">x</text>
+              <rect x="18" y="14" width="10" height="10" fill="#FFD54A"/><text x="8" y="23" font-size="9" fill="#8A8E9C" font-family="sans-serif">x</text>
+              <rect x="320" y="118" width="10" height="10" fill="#FFD54A"/><text x="334" y="127" font-size="9" fill="#8A8E9C" font-family="sans-serif">x</text>
+            </svg>
+          </div>
+        </div>
+        <div class="card logocell"><h3>Minimum sizes</h3><p class="sub">Below these, the notch closes up and the mark loses its read.</p>
+          <div class="stage" style="min-height:170px;display:flex;align-items:flex-end;justify-content:center;gap:34px;padding-bottom:24px;">
+            <div style="text-align:center;"><img src="assets/brand/logo.svg" alt="" style="width:120px;"><div style="font-size:10px;color:#8A8E9C;margin-top:8px;">lockup · 120px</div></div>
+            <div style="text-align:center;"><img src="assets/brand/logo-mark.svg" alt="" style="width:20px;"><div style="font-size:10px;color:#8A8E9C;margin-top:8px;">mark · 20px</div></div>
+            <div style="text-align:center;"><img src="assets/brand/app-icon.svg" alt="" style="width:60px;border-radius:14px;"><div style="font-size:10px;color:#8A8E9C;margin-top:8px;">icon · 60px</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;"><h3>Misuse</h3><p class="sub">The mark ships as a file. If you are redrawing any part of it, stop.</p>
+        <div class="grid g4" style="margin-top:6px;">
+          <div class="logocell"><div class="stage" style="min-height:84px;"><svg viewBox="0 0 80 96" style="width:46px;transform:scaleX(1.6);"><defs><mask id="llmu1" maskUnits="userSpaceOnUse" x="0" y="0" width="440" height="96"><rect x="0" y="0" width="440" height="96" fill="#fff"/><circle cx="61" cy="17" r="12.5" fill="#000"/></mask></defs><path d="M26 18 h28 a10 10 0 0 1 10 10 v12 a10 10 0 0 1 -10 10 h-14 l-10 9 v-9 h-4 a10 10 0 0 1 -10 -10 v-12 a10 10 0 0 1 10 -10 z" fill="none" stroke="#16171D" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round" mask="url(#llmu1)"/><circle cx="61" cy="17" r="7" fill="#635BFF"/><rect x="14" y="68" width="52" height="10" rx="5" fill="#FFD54A"/></svg></div><p class="sub" style="margin:8px 0 0;text-align:center;">✕ Don't stretch</p></div>
+          <div class="logocell"><div class="stage" style="min-height:84px;"><svg viewBox="0 0 80 96" style="width:46px;"><defs><mask id="llmu2" maskUnits="userSpaceOnUse" x="0" y="0" width="440" height="96"><rect x="0" y="0" width="440" height="96" fill="#fff"/><circle cx="61" cy="17" r="12.5" fill="#000"/></mask></defs><path d="M26 18 h28 a10 10 0 0 1 10 10 v12 a10 10 0 0 1 -10 10 h-14 l-10 9 v-9 h-4 a10 10 0 0 1 -10 -10 v-12 a10 10 0 0 1 10 -10 z" fill="none" stroke="#CD3D64" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round" mask="url(#llmu2)"/><circle cx="61" cy="17" r="7" fill="#CD3D64"/><rect x="14" y="68" width="52" height="10" rx="5" fill="#FFD54A"/></svg></div><p class="sub" style="margin:8px 0 0;text-align:center;">✕ Don't recolor the ink</p></div>
+          <div class="logocell"><div class="stage" style="min-height:84px;"><svg viewBox="0 0 80 96" style="width:46px;"><path d="M26 18 h28 a10 10 0 0 1 10 10 v12 a10 10 0 0 1 -10 10 h-14 l-10 9 v-9 h-4 a10 10 0 0 1 -10 -10 v-12 a10 10 0 0 1 10 -10 z" fill="none" stroke="#16171D" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="61" cy="17" r="7" fill="#635BFF"/><rect x="14" y="68" width="52" height="10" rx="5" fill="#FFD54A"/></svg></div><p class="sub" style="margin:8px 0 0;text-align:center;">✕ Don't close the notch</p></div>
+          <div class="logocell"><div class="stage" style="min-height:84px;background:linear-gradient(135deg,#635BFF,#FFD54A);"><svg viewBox="0 0 80 96" style="width:46px;"><defs><mask id="llmu4" maskUnits="userSpaceOnUse" x="0" y="0" width="440" height="96"><rect x="0" y="0" width="440" height="96" fill="#fff"/><circle cx="61" cy="17" r="12.5" fill="#000"/></mask></defs><path d="M26 18 h28 a10 10 0 0 1 10 10 v12 a10 10 0 0 1 -10 10 h-14 l-10 9 v-9 h-4 a10 10 0 0 1 -10 -10 v-12 a10 10 0 0 1 10 -10 z" fill="none" stroke="#16171D" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round" mask="url(#llmu4)"/><circle cx="61" cy="17" r="7" fill="#635BFF"/><rect x="14" y="68" width="52" height="10" rx="5" fill="#FFD54A"/></svg></div><p class="sub" style="margin:8px 0 0;text-align:center;">✕ Don't fight the background</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="color">
+      <h2>Color palette</h2>
+      <p class="note">Warm paper, near-black ink, iris for interaction, marker for the highlight ritual. Semantic colors only ever appear in the layer.</p>
+      <div class="grid g4">
+        <div class="swatch"><div class="chip" style="background:#16171D"></div><div class="meta"><b>Ink</b><code>#16171D</code></div></div>
+        <div class="swatch"><div class="chip" style="background:#F7F5F0;border-bottom:1px solid var(--line)"></div><div class="meta"><b>Paper</b><code>#F7F5F0</code></div></div>
+        <div class="swatch"><div class="chip" style="background:#635BFF"></div><div class="meta"><b>Iris</b><code>#635BFF</code></div></div>
+        <div class="swatch"><div class="chip" style="background:#FFD54A"></div><div class="meta"><b>Marker</b><code>#FFD54A</code></div></div>
+        <div class="swatch"><div class="chip" style="background:#4A4D5A"></div><div class="meta"><b>Ink 2</b><code>#4A4D5A</code></div></div>
+        <div class="swatch"><div class="chip" style="background:#FFFFFF;border-bottom:1px solid var(--line)"></div><div class="meta"><b>Card</b><code>#FFFFFF</code></div></div>
+        <div class="swatch"><div class="chip" style="background:#EFEEFF"></div><div class="meta"><b>Iris soft</b><code>#EFEEFF</code></div></div>
+        <div class="swatch"><div class="chip" style="background:#FFF3CC"></div><div class="meta"><b>Marker soft</b><code>#FFF3CC</code></div></div>
+      </div>
+      <p class="note" style="margin-top:14px;">Dark theme maps 1:1 onto the working demos' tokens: ink↔paper flip, iris lifts to <code>#7B80F7</code>, marker dims to 22% alpha for highlights. Full pairs live in <code>src/comment-layer.css</code>.</p>
+    </section>
+
+    <section id="type">
+      <h2>Typography</h2>
+      <p class="note">System stack today (ships at 0KB); Inter Tight as the brand face when we outgrow it. Tight tracking on display sizes only.</p>
+      <div class="card">
+        <div class="typerow"><div class="spec">Display · 30/700 · -2.5%</div><div style="font-size:30px;font-weight:700;letter-spacing:-.025em;">Comments that <span class="hl">live</span> in the document</div></div>
+        <div class="typerow"><div class="spec">Title · 19/650 · -1.5%</div><div style="font-size:19px;font-weight:650;letter-spacing:-.015em;">Throughput by band</div></div>
+        <div class="typerow"><div class="spec">Body · 15/400 · 1.65lh</div><div style="color:var(--ink-2);">A comment remembers the state it was made in, and only surfaces there.</div></div>
+        <div class="typerow"><div class="spec">Label · 12.5/500</div><div style="font-size:12.5px;font-weight:500;color:var(--ink-2);">Comment &nbsp;·&nbsp; Read as doc &nbsp;·&nbsp; Comments · 3</div></div>
+        <div class="typerow"><div class="spec">Caption · 10.5/600 · caps</div><div style="font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Region · North</div></div>
+      </div>
+    </section>
+
+    <section id="icons">
+      <h2>Iconography</h2>
+      <p class="note">16px grid, 1.6px stroke, round caps and joins, no fills except state dots. Friendly geometry — matches the reference icon sheets without the weight.</p>
+      <div class="iconrow">
+        <div class="icontile"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7a4.5 4.5 0 0 1-4.5 4.5H6l-3 2.5v-3.4A4.49 4.49 0 0 1 1.5 7 4.5 4.5 0 0 1 6 2.5h3A4.5 4.5 0 0 1 13.5 7z"/></svg></div>
+        <div class="icontile"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8a6 6 0 1 1-2.1-4.55"/><path d="M8 5.5v5M5.5 8h5"/></svg></div>
+        <div class="icontile"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 2.5h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3"/></svg></div>
+        <div class="icontile"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9.5 9.5 6.5M7 4l1-1a3 3 0 0 1 4.24 4.24l-1 1M9 12l-1 1a3 3 0 0 1-4.24-4.24l1-1"/></svg></div>
+        <div class="icontile"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5" r="2.5"/><path d="M2.5 13.5a5.5 5.5 0 0 1 11 0"/></svg></div>
+        <div class="icontile"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8.5v3a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/><path d="M10.5 2.5h3v3M13.5 2.5 8 8"/></svg></div>
+        <div class="icontile" style="color:var(--iris);"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"/></svg></div>
+      </div>
+    </section>
+
+    <section id="components">
+      <h2>Components</h2>
+      <p class="note">Live samples using the shipped values from <code>src/comment-layer.css</code>.</p>
+      <div class="card"><h3>Comment card</h3><p class="sub">Quote snippet → author → thread → ghost actions. Resolved = badge swap + fade, no heavy borders.</p>
+        <div class="stagewide">
+          <div class="ll-card-sample">
+            <div class="snip">"recovery is uneven across regions"</div>
+            <div class="who"><span class="av">A</span>Amin<span class="badge">Summary</span></div>
+            <div class="cmt">Lead with this line — the uneven recovery is the story for the review.</div>
+            <div class="acts"><button class="ghost">Reply</button><button class="ghost">Resolve</button><button class="ghost pri">Go to</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px;"><h3>The dock</h3><p class="sub">All layer chrome in one floating pill — media-player affordance, bottom center. Status chips stack above it.</p>
+        <div class="stagewide" style="flex-direction:column;">
+          <span class="chipsample"><b>3</b> comments on other tabs/regions — 2 on "Metrics", 1 on "Plan".</span>
+          <div class="docksample">
+            <button class="on"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8a6 6 0 1 1-2.1-4.55"/><path d="M8 5.5v5M5.5 8h5"/></svg>Commenting</button>
+            <button><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 2.5h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3"/></svg>Read as doc</button>
+            <span class="docksep"></span>
+            <button><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7a4.5 4.5 0 0 1-4.5 4.5H6l-3 2.5v-3.4A4.49 4.49 0 0 1 1.5 7 4.5 4.5 0 0 1 6 2.5h3A4.5 4.5 0 0 1 13.5 7z"/></svg>Comments · 5</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="chrome">
+      <h2>Layer chrome — the consolidation</h2>
+      <p class="note">Before: controls in all four corners. After: one dock, one status axis. Shipped in the working demos.</p>
+      <div class="grid g2">
+        <div class="frame">
+          <div class="ttl">Before</div>
+          <div class="tag" style="top:10px;right:10px;">Hide ›</div>
+          <div class="tag" style="top:50%;right:0;border-radius:5px 0 0 5px;">COMMENTS</div>
+          <div class="tag" style="bottom:34px;right:10px;">Read as doc</div>
+          <div class="tag" style="bottom:10px;right:10px;">Comment</div>
+          <div class="tag" style="bottom:10px;left:10px;">3 elsewhere…</div>
+          <div class="tag" style="bottom:34px;left:10px;">⚠ orphaned</div>
+          <div class="tag" style="top:10px;left:10px;">◐ theme</div>
+        </div>
+        <div class="frame">
+          <div class="ttl">After</div>
+          <div class="tag good" style="top:10px;left:10px;">◐ theme</div>
+          <div class="tag good" style="bottom:30px;left:50%;transform:translateX(-50%);">status chips</div>
+          <div class="tag good" style="bottom:8px;left:50%;transform:translateX(-50%);">Comment · Read as doc │ Comments · 3</div>
+        </div>
+      </div>
+      <table>
+        <tr><th>Decision</th><th>Why</th></tr>
+        <tr><td><b>Bottom-center floating dock</b></td><td>Established affordance (media players, iOS tab bars, Figma toolbar). One place to look, thumb-reachable, stays out of the reading column.</td></tr>
+        <tr><td><b>One slot, two states</b></td><td>"Comments · n" and "Hide" share a slot — open/close is one mental control, and the unresolved count is always visible.</td></tr>
+        <tr><td><b>Status chips above the dock</b></td><td>"Elsewhere" and "orphaned" are ambient status, not actions — they hover near the controls but can't be clicked by accident.</td></tr>
+        <tr><td><b>Glass kept to one surface</b></td><td>Only the dock blurs. Liquid-glass everywhere reads heavy; one frosted pill reads considered.</td></tr>
+      </table>
+    </section>
+
+    <section id="voice">
+      <h2>Usage &amp; voice</h2>
+      <table>
+        <tr><th>Do</th><th>Don't</th></tr>
+        <tr><td>One marker highlight per viewport — it's the brand gesture, spend it carefully.</td><td>Stack glass on glass, or blur anything that isn't the dock.</td></tr>
+        <tr><td>Ink on paper; iris only for things you can press; marker only for anchored content.</td><td>Use iris and marker decoratively at the same time.</td></tr>
+        <tr><td>Say what a comment does: "lives where you made it."</td><td>Say "revolutionary", "AI-powered", or anything a gradient would say.</td></tr>
+      </table>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>

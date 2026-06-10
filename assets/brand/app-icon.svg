@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LivingLink app icon">
+  <!-- App icon — paper squircle, the anchored-comment mark, one marker accent -->
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FCFBF8"/>
+      <stop offset="1" stop-color="#F2F0E9"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#paper)"/>
+  <rect width="512" height="512" rx="116" fill="none" stroke="#16171D" stroke-opacity=".06" stroke-width="2"/>
+  <!-- EXACT canonical mark geometry from logo-mark.svg, scaled 4.6x — never
+       redrawn, so proportions always match the lockup. Notch is cut with
+       background paint (not a mask — masks inside transformed groups fail in
+       some engines); color sampled from the squircle gradient at that height. -->
+  <g transform="translate(70,54) scale(4.6)">
+    <path d="M26 18 h28 a10 10 0 0 1 10 10 v12 a10 10 0 0 1 -10 10 h-14 l-10 9 v-9 h-4 a10 10 0 0 1 -10 -10 v-12 a10 10 0 0 1 10 -10 z"
+          fill="none" stroke="#16171D" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="61" cy="17" r="12.5" fill="#FAF9F4"/>
+    <circle cx="61" cy="17" r="7" fill="#635BFF"/>
+    <rect x="14" y="68" width="52" height="10" rx="5" fill="#FFD54A"/>
+  </g>
+</svg>

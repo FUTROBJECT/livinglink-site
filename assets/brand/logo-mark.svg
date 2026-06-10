@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 96" role="img" aria-label="LivingLink mark">
+  <!-- PRIMARY MARK — the Anchored Comment. The iris dot sits in a punched-out
+       notch (transparent keyline, works on any background) so it reads as a
+       deliberate badge at every size. -->
+  <defs>
+    <mask id="llnotch" maskUnits="userSpaceOnUse" x="0" y="0" width="80" height="96">
+      <rect x="0" y="0" width="80" height="96" fill="#fff"/>
+      <circle cx="61" cy="17" r="12.5" fill="#000"/>
+    </mask>
+  </defs>
+  <path d="M26 18 h28 a10 10 0 0 1 10 10 v12 a10 10 0 0 1 -10 10 h-14 l-10 9 v-9 h-4 a10 10 0 0 1 -10 -10 v-12 a10 10 0 0 1 10 -10 z"
+        fill="none" stroke="#16171D" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round" mask="url(#llnotch)"/>
+  <circle cx="61" cy="17" r="7" fill="#635BFF"/>
+  <rect x="14" y="68" width="52" height="10" rx="5" fill="#FFD54A"/>
+</svg>

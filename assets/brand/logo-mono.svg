@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 96" role="img" aria-label="LivingLink — one color">
+  <!-- ONE COLOR — everything Ink. For print, embossing, engraving, fax-grade contexts.
+       May be set in any single color when the context demands it. -->
+  <defs>
+    <mask id="llnotch-mono" maskUnits="userSpaceOnUse" x="0" y="0" width="440" height="96">
+      <rect x="0" y="0" width="440" height="96" fill="#fff"/>
+      <circle cx="61" cy="17" r="12.5" fill="#000"/>
+    </mask>
+  </defs>
+  <g>
+    <path d="M26 18 h28 a10 10 0 0 1 10 10 v12 a10 10 0 0 1 -10 10 h-14 l-10 9 v-9 h-4 a10 10 0 0 1 -10 -10 v-12 a10 10 0 0 1 10 -10 z"
+          fill="none" stroke="#16171D" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round" mask="url(#llnotch-mono)"/>
+    <circle cx="61" cy="17" r="7" fill="#16171D"/>
+    <rect x="14" y="68" width="52" height="10" rx="5" fill="#16171D"/>
+  </g>
+  <text x="88" y="62" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif"
+        font-size="40" font-weight="700" letter-spacing="-1.5" fill="#16171D">LivingLink</text>
+</svg>
