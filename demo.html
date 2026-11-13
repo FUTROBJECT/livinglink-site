@@ -487,10 +487,12 @@ body.ll-reanchoring [data-ll]:hover{background:var(--ll-accent-soft);box-shadow:
  *     state   — the state (tab) the comment was made in
  *     ordinal — which occurrence, when several blocks share identical text
  *
- * resolve(target, blocks) re-finds the block, in order of confidence:
+ * resolve(target, blocks, opts) re-finds the block, in order of confidence:
  *   1. exact   — a block whose hash matches (ordinal/state breaks ties)
  *   2. fuzzy   — best trigram-Dice similarity above THRESHOLD, same state first
  *   3. orphaned— nothing close enough; flagged, never silently mis-anchored
+ * opts.scan ('document' | 'active') says whether `blocks` is the whole
+ * document or only the active state; see resolve() and DR-0009.
  *
  * `blocks` is a plain array of { id, text, hash, state } — so this module is
  * unit-testable in Node without a DOM. The core builds that array from the
@@ -540,7 +542,23 @@ body.ll-reanchoring [data-ll]:hover{background:var(--ll-accent-soft);box-shadow:
     return { id: bestId, score: bestScore };
   }
 
-  function resolve(target, blocks){
+  // opts.scan says what `blocks` covers (DR-0009), as declared by the adapter:
+  //   'document' (default) — every state's blocks are in the list, so a block
+  //       found in another state is a block that MOVED, and is followed.
+  //   'active' — only the active state's blocks are in the list (SPA hosts
+  //       that rebuild the page per view). The layer cannot tell a moved
+  //       block from a lookalike on another view, so a target is matched only
+  //       against its own state. If that state is not opts.active the comment
+  //       is off-screen: status 'unmounted', neither resolved nor orphaned.
+  //       Blocks with a null state belong to no state (chrome the adapter
+  //       declared ungoverned); they are in every scan and stay candidates.
+  function resolve(target, blocks, opts){
+    if (opts && opts.scan === 'active'){
+      if (target.state != null && target.state !== opts.active){
+        return { id: null, status: 'unmounted', score: 0 };
+      }
+      blocks = blocks.filter(function(b){ return b.state == null || b.state === target.state; });
+    }
     // 1. exact by hash
     var exact = blocks.filter(function(b){ return b.hash === target.hash; });
     if (exact.length){
@@ -781,7 +799,11 @@ body.ll-reanchoring [data-ll]:hover{background:var(--ll-accent-soft);box-shadow:
  *     applies() }                // is this axis currently governing visibility?
  *                                //   (linear "read as doc" mode = tab.applies()->false, P1.2)
  * Plus: adapter.axes (array, axes[0] is the structural one), adapter.selector,
- * adapter.controlSelector, adapter.onStateChange(cb), adapter.getSeeds().
+ * adapter.controlSelector, adapter.onStateChange(cb), adapter.getSeeds(), and
+ * adapter.scan: 'document' when every state's blocks are in the DOM at once
+ * (tab hosts), 'active' when only the active state's are (SPA hosts). The
+ * structural axis may report null for a block that belongs to no state; a
+ * comment on it shows in every state (DR-0009).
  *
  * A comment carries c.state = { axisKey: recordedValue }. The single rule that
  * everything hangs off is visible() — now delegated to the pure, multi-axis
@@ -865,6 +887,13 @@ window.LivingLink = (function(){
     var s={}; axes().forEach(function(a){ s[a.key]= a.record ? a.record(block) : a.of(block); }); return s;
   }
   function stateLabelOf(c){ return LLS.stateLabel(c.state, axisDefs()); }
+  // The state badge on a card. A comment that recorded no state at all (made
+  // on a block that belongs to no state, DR-0009) is document-wide and gets no
+  // badge, only "done" once resolved.
+  function badgeHtml(label, resolved){
+    var t=label ? label+(resolved?' · done':'') : (resolved?'done':'');
+    return t ? '<span class="ll-badge">'+esc(t)+'</span>' : '';
+  }
   function primaryValue(c){ return LLS.primaryValue(c.state, axisDefs()); }
   function primaryLabel(v){ return primaryAxis().label ? primaryAxis().label(v) : v; }
 
@@ -901,25 +930,42 @@ window.LivingLink = (function(){
     return {quote:text, hash:LLA.hashText(text), state:a?a.state:null, ordinal:0};
   }
 
+  // What a scan of the DOM covers, as DECLARED by the adapter (DR-0009):
+  // 'document' = every state's blocks are present (tab hosts); 'active' = only
+  // the active state's blocks are (SPA hosts that rebuild the page per view).
+  // The core does not infer this.
+  function scanMode(){ return ADAPTER.scan==='active' ? 'active' : 'document'; }
+
   // re-resolve a comment's target to a live block; flag if orphaned.
-  // Updates only the structural axis from the resolved block; other axes
-  // (e.g. region) were captured at creation and are preserved.
+  // Non-structural axes (e.g. region) were captured at creation and are never
+  // touched here. The structural axis is handled per DR-0009:
+  //  - 'document' scan: the layer can see the whole document, so a block found
+  //    in another state has MOVED and the comment follows it.
+  //  - 'active' scan: the layer sees one state at a time and cannot tell a
+  //    moved block from a lookalike, so it never moves a comment. The
+  //    structural state is the one the target was made in. Records written
+  //    before DR-0009 can carry a different value (the old code rewrote it per
+  //    view and it got saved); this puts it back.
   function resolveComment(c){
     if(!c.target) return;
-    var r=LLA.resolve(c.target, blockIndex);
-    if(r.id){ c.anchor=r.id; if(!c.state) c.state={}; c.state[primaryAxis().key]=anchors[r.id].state; c.orphaned=false; c.match=r.status; }
-    else {
+    var key=primaryAxis().key, mode=scanMode();
+    if(!c.state) c.state={};
+    if(mode==='active' && c.target.state!==undefined && c.state[key]!==c.target.state) c.state[key]=c.target.state;
+    var r=LLA.resolve(c.target, blockIndex, {scan:mode, active:primaryAxis().active()});
+    if(r.id){
+      c.anchor=r.id; c.orphaned=false; c.match=r.status;
+      // follow a moved block; a block that belongs to no state (null) leaves
+      // the comment's recorded structural value alone
+      if(mode==='document' && anchors[r.id].state!=null) c.state[key]=anchors[r.id].state;
+    } else {
       c.anchor=null;
-      // "Orphaned" must mean the block is GONE, not merely off-screen. In
-      // SPA hosts only the rendered screen's blocks are in the DOM, so a
-      // comment whose home state contributed no blocks to this scan is just
-      // unmounted — it counts in the "elsewhere" chip and re-resolves when
-      // its screen renders. Only flag orphaned when the home state's blocks
-      // ARE present and the comment's block still can't be found.
-      var home=c.target.state;
-      var mounted=(home==null) || blockIndex.some(function(b){ return b.state===home; });
-      c.orphaned=mounted;
-      c.match=mounted?'orphaned':'unmounted';
+      // 'unmounted' = off-screen in an active-only scan: it counts in the
+      // "elsewhere" chip and resolves when its state is shown. Anything else
+      // the block is gone: orphaned, and it goes to the tray. In a
+      // whole-document scan that includes a comment whose home state no
+      // longer exists.
+      c.orphaned=(r.status!=='unmounted');
+      c.match=r.status;
     }
   }
   function snippet(id){ var a=anchors[id]; if(!a) return id;
@@ -961,7 +1007,7 @@ window.LivingLink = (function(){
       card.innerHTML=
         '<div class="ll-snip">“'+esc(snippet(c.anchor))+'”</div>'+
         '<div class="ll-top"><div class="ll-who">'+av(head.who)+esc(head.who)+'</div>'+
-          '<span class="ll-badge">'+esc(stateLabelOf(c))+(c.resolved?' · done':'')+'</span></div>'+
+          badgeHtml(stateLabelOf(c), c.resolved)+'</div>'+
         '<div class="ll-text">'+esc(head.text)+'</div>'+
         (expanded?replies:(c.thread.length>1?'<div class="ll-snip">'+(c.thread.length-1)+' more repl'+(c.thread.length>2?'ies':'y')+'…</div>':''))+
         (expanded?(
@@ -1116,7 +1162,7 @@ window.LivingLink = (function(){
       item.innerHTML=
         '<div class="ll-snip">“'+esc(shortQuote(c))+'”</div>'+
         '<div class="ll-top"><div class="ll-who">'+av(first.who)+esc(first.who)+'</div>'+
-          '<span class="ll-badge">'+esc(stateLabelOf(c))+'</span></div>'+
+          badgeHtml(stateLabelOf(c), false)+'</div>'+
         '<div class="ll-text">'+esc(first.text)+'</div>'+
         (c.thread.length>1?'<div class="ll-tray-sub">'+(c.thread.length-1)+' repl'+(c.thread.length>2?'ies':'y')+'</div>':'')+
         (sugg.length?'<div class="ll-sugg-h">Closest blocks now</div>'
@@ -1162,7 +1208,9 @@ window.LivingLink = (function(){
   }
   // a block the reviewer can act on right now: the structural axis is off
   // (linear mode shows everything) or the block is in the active state
-  function blockLive(block){ var pa=primaryAxis(); return (pa.applies&&!pa.applies()) || primaryOf(block)===pa.active(); }
+  // A block with a null structural value belongs to no state (the adapter
+  // declared it ungoverned, DR-0009): it is live wherever it is on the page.
+  function blockLive(block){ var pa=primaryAxis(), s=primaryOf(block); return (pa.applies&&!pa.applies()) || s==null || s===pa.active(); }
 
   // Re-attach an orphaned comment to a block a person chose. The target is
   // rebuilt from the new block; the state keeps every recorded axis except the
@@ -1364,6 +1412,9 @@ window.LivingLink = (function(){
   // ---- go ----
   function init(adapter, store){
     ADAPTER=adapter;
+    if(ADAPTER.scan!=='document' && ADAPTER.scan!=='active' && typeof console!=='undefined' && console.warn){
+      console.warn("[LivingLink] adapter did not declare `scan` ('document' or 'active'); assuming 'document'. See DR-0009.");
+    }
     STORE=store || (typeof window!=='undefined' && window.LivingLinkStore) || memStore;
     NS=(typeof location!=='undefined' && location.pathname) || 'artifact';
     ME=STORE.getUser ? STORE.getUser() : null;
@@ -1472,6 +1523,9 @@ window.LivingLink = (function(){
   }
 
   var adapter={
+    // every tab's panel is in the DOM at once, so a scan sees the whole
+    // document and a block found on another tab has moved (DR-0009)
+    scan:'document',
     selector:'.tab-panel h2,.tab-panel h3,.tab-panel h4,.tab-panel p,.tab-panel li,'+
              '.tab-panel td,.tab-panel th,.tab-panel .bar,.tab-panel .note',
     controlSelector:'.tab-btn, #regionseg [data-region]',
