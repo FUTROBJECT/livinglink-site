@@ -7,6 +7,7 @@ Static marketing site for LivingLink (speculative concept, FutureObjects Researc
 | `index.html` | Landing page |
 | `design-system.html` | Brand book / design system |
 | `demo.html` | Live working demo (local-store build — comments persist per-visitor in their browser) |
+| `overview.html` | Working document: what LivingLink is and where it could go. A copy of `02-brand/overview.html`, without the comment layer. Marked `noindex`; shared by link. |
 | `assets/brand/` | Canonical logo files |
 
 Everything is self-contained static HTML — no build step, no dependencies.

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>LivingLink: what it is, and where it could go</title>
+<!--
+  A working document. Copy marked "Existing" is taken or adapted from the
+  project's own record (landing page, founding page, PRD). Copy marked "New
+  draft" was written on 13 November 2026 and is waiting for the author.
+
+  Brand: tokens from landing.html / design-system.html. The logo is the
+  canonical file in assets/brand/, referenced, never redrawn (DR-0006).
+  Tabs follow the .tab-btn / .tab-panel / switchTab() shape so the existing
+  tabpanel adapter can add the comment layer:
+    cd 03-layer && python3 inject.py ../02-brand/overview.html ../02-brand/overview-commented.html src/adapters/tabpanel.js
+-->
+<style>
+  :root{
+    --ink:#16171D; --ink-2:#4A4D5A; --muted:#8A8E9C;
+    --paper:#F7F5F0; --card:#FFFFFF; --line:#E7E4DC;
+    --iris:#635BFF; --iris-deep:#5851E6; --iris-soft:#EFEEFF;
+    --marker:#FFD54A; --marker-soft:#FFF3CC;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Inter",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font);background:var(--paper);color:var(--ink);
+    font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;}
+  p,h1,h2,h3,li{text-wrap:pretty;}
+  a{color:var(--iris-deep);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;}
+  a:hover{color:var(--iris);}
+  .wrap{max-width:820px;margin:0 auto;padding:0 28px;}
+
+  /* masthead: the lockup on paper, with its clear space */
+  .mast{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:30px 28px 0;}
+  .mast img{display:block;height:38px;width:auto;}
+  .mast .kind{font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:right;}
+
+  /* opening */
+  .open{padding:62px 28px 34px;}
+  h1{font-size:clamp(32px,5vw,50px);font-weight:700;letter-spacing:-.03em;line-height:1.08;margin:0 0 18px;max-width:700px;}
+  /* the marker highlight: the brand's one gesture, used once */
+  .hl{background:var(--marker);border-radius:8px;padding:1px 10px 3px;box-decoration-break:clone;-webkit-box-decoration-break:clone;}
+  .lede{font-size:18px;color:var(--ink-2);max-width:620px;margin:0;}
+
+  /* which copy is which */
+  .key{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin:26px 0 0;font-size:12.5px;color:var(--ink-2);}
+  .src{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+    border-radius:999px;padding:3px 10px;white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--ink-2);}
+  .src.new{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .tagline{margin:0 0 10px;}
+
+  /* tabs: plain, on paper. The frosted surface is the comment dock's alone. */
+  .tabs{position:sticky;top:0;z-index:30;background:var(--paper);border-bottom:1px solid var(--line);margin-top:8px;}
+  /* seven sections do not fit one row at every width: wrap to a second row
+     so none is hidden off the edge */
+  .tabs .wrap{display:flex;flex-wrap:wrap;gap:0 4px;}
+  .tab-btn{appearance:none;border:0;background:transparent;font:inherit;font-size:14px;font-weight:500;color:var(--ink-2);
+    padding:12px 12px 10px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;}
+  .tab-btn:hover{color:var(--iris-deep);}
+  .tab-btn.active{color:var(--ink);font-weight:600;border-bottom-color:var(--ink);}
+  .tab-btn:focus-visible{outline:2px solid var(--iris);outline-offset:-3px;border-radius:6px;}
+
+  .tab-panel{display:none;padding:44px 0 30px;}
+  .tab-panel.active{display:block;}
+  h2{font-size:27px;font-weight:700;letter-spacing:-.025em;line-height:1.2;margin:0 0 14px;max-width:660px;}
+  h3{font-size:19px;font-weight:650;letter-spacing:-.015em;line-height:1.3;margin:40px 0 10px;}
+  .tab-panel p{margin:0 0 14px;max-width:660px;color:var(--ink-2);}
+  .tab-panel p.lead{font-size:17.5px;color:var(--ink);}
+  .tab-panel ul{margin:0 0 14px;padding-left:20px;max-width:660px;color:var(--ink-2);}
+  .tab-panel li{margin:0 0 7px;}
+  .tab-panel li b,.tab-panel p b{color:var(--ink);font-weight:600;}
+
+  /* three-up cards */
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:26px 0 8px;}
+  .cardx{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 20px 16px;}
+  .cardx h3{margin:0 0 6px;font-size:16.5px;}
+  .cardx p{font-size:14.5px;margin:0;line-height:1.6;}
+  .cardx .n{display:block;font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  @media(max-width:760px){.three{grid-template-columns:1fr;}}
+
+  /* a comment card, to show the object itself (values from the design system) */
+  .specimen{display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start;background:var(--card);
+    border:1px solid var(--line);border-radius:18px;padding:24px;margin:28px 0 8px;}
+  .specimen .page h4{margin:0 0 8px;font-size:15px;font-weight:650;}
+  .specimen .page p{font-size:14px;margin:0 0 9px;color:var(--ink-2);}
+  .specimen .page .on{background:rgba(255,221,87,.34);box-shadow:0 0 0 2px rgba(255,221,87,.34);border-radius:3px;}
+  .specimen .pills{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;}
+  .specimen .pills span{font-size:11.5px;font-weight:500;color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:3px 11px;}
+  .specimen .pills span.cur{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .cmt{background:#fff;border:1px solid #e3e8ee;border-radius:12px;box-shadow:0 1px 3px rgba(26,31,54,.08);padding:13px 15px;font-size:13px;line-height:1.5;}
+  .cmt .q{font-size:11.5px;color:#8792a2;background:#f7f8fa;border-left:2px solid var(--iris);padding:5px 9px;border-radius:0 6px 6px 0;margin-bottom:8px;}
+  .cmt .who{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px;font-weight:600;font-size:12.5px;}
+  .cmt .who i{font-style:normal;display:inline-flex;align-items:center;gap:7px;}
+  .cmt .av{width:22px;height:22px;border-radius:50%;background:#2c6e9c;color:#fff;font-size:9.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;}
+  .cmt .st{font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--iris-deep);background:var(--iris-soft);border-radius:999px;padding:2.5px 8px;}
+  .cmt .t{color:#4f566b;}
+  .specimen .cap{grid-column:1/-1;font-size:12.5px;color:var(--muted);margin:2px 0 0;}
+  @media(max-width:760px){.specimen{grid-template-columns:1fr;}}
+
+  /* notes and status */
+  .note{border-left:3px solid var(--ink);background:var(--card);border-radius:0 12px 12px 0;padding:14px 18px;margin:22px 0;max-width:660px;}
+  .note p{margin:0;color:var(--ink);font-size:15px;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0 8px;}
+  .two .cardx ul{padding-left:18px;margin:0;font-size:14.5px;}
+  .two .cardx li{margin-bottom:8px;}
+  @media(max-width:760px){.two{grid-template-columns:1fr;}}
+  .secthead{display:flex;align-items:center;gap:10px;margin:0 0 16px;}
+
+  /* a plain comparison table */
+  table.cmp{width:100%;max-width:720px;border-collapse:collapse;margin:14px 0 8px;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:14.5px;}
+  table.cmp th,table.cmp td{text-align:left;vertical-align:top;padding:11px 16px;border-top:1px solid var(--line);color:var(--ink-2);}
+  table.cmp thead th{border-top:0;font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+  table.cmp tbody th{font-weight:600;color:var(--ink);width:38%;}
+
+  footer{border-top:1px solid var(--line);margin-top:30px;padding:26px 0 120px;}
+  footer .wrap{display:flex;align-items:center;gap:14px;color:var(--muted);font-size:12.5px;}
+  footer img{height:30px;width:auto;display:block;}
+
+  @media print{
+    .tabs{display:none;} .tab-panel{display:block !important;padding:18px 0;break-inside:avoid-page;}
+    body{background:#fff;} footer{padding-bottom:20px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap mast">
+  <img src="assets/brand/logo.svg" alt="LivingLink" width="174" height="38">
+  <div class="kind">Working document<br>13 November 2026</div>
+</header>
+
+<div class="wrap open">
+  <div class="tagline"><span class="src">Existing</span></div>
+  <h1>Comments that <span class="hl">live where you made them</span></h1>
+  <p class="lede">LivingLink is a margin-comment layer for interactive documents. A comment remembers the tab, the filter and the state it was made in, and surfaces only there.</p>
+  <div class="key">
+    <span><span class="src">Existing</span>&nbsp; from the project's own record, lightly edited</span>
+    <span><span class="src new">New draft</span>&nbsp; written 13 November 2026, waiting for the author</span>
+  </div>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap">
+    <button type="button" class="tab-btn active" onclick="switchTab('is')">What it is</button>
+    <button type="button" class="tab-btn" onclick="switchTab('why')">Why now</button>
+    <button type="button" class="tab-btn" onclick="switchTab('how')">How it works</button>
+    <button type="button" class="tab-btn" onclick="switchTab('stands')">Where it stands</button>
+    <button type="button" class="tab-btn" onclick="switchTab('others')">What else is out there</button>
+    <button type="button" class="tab-btn" onclick="switchTab('connects')">What it could connect to</button>
+    <button type="button" class="tab-btn" onclick="switchTab('next')">Where it could go</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ===================== WHAT IT IS ===================== -->
+<section class="tab-panel active" id="tab-is">
+  <div class="secthead"><span class="src">Existing</span></div>
+  <h2>Google Docs comments, for documents with state</h2>
+  <p class="lead">Most feedback tools treat a page as flat, with notes pinned to pixels and screenshots. Interactive documents have tabs, filters and views, and what a reader sees depends on which are in force. A comment made on the Metrics tab, filtered to North, is about that view, so that is where LivingLink shows it.</p>
+
+  <div class="specimen" aria-label="An example: one paragraph, one comment, one state">
+    <div class="page">
+      <div class="pills"><span>Summary</span><span class="cur">Metrics</span><span>Plan</span><span class="cur">North</span><span>South</span></div>
+      <h4>Throughput by band</h4>
+      <p>The forecast line is fixed and the units shift by region.</p>
+      <p><span class="on">In North, Band A is well under forecast.</span></p>
+    </div>
+    <div class="cmt">
+      <div class="q">&ldquo;In North, Band A is well under forecast.&rdquo;</div>
+      <div class="who"><i><span class="av">A</span>Amin</i><span class="st">Metrics &middot; North</span></div>
+      <div class="t">Worth a callout before Thursday.</div>
+    </div>
+    <div class="cap">The comment belongs to this sentence on this tab with this filter. Switch to South and the margin is empty. A chip says one comment is waiting elsewhere.</div>
+  </div>
+
+  <div class="three">
+    <div class="cardx">
+      <span class="n">State-aware</span>
+      <h3>Where plus what state</h3>
+      <p>A comment's identity is its anchor and its state: tab, region, any axis the document has. Switch views and the margin updates.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Anchored to content</span>
+      <h3>It survives the edit</h3>
+      <p>Anchors follow the words. Reorder, edit or regenerate the page and each comment finds its block again. One that cannot is flagged and waits for a person to place it.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Yours, end to end</span>
+      <h3>No vendor holds it</h3>
+      <p>Sync runs on Yjs, an open-source library, against a server you own. Comments are plain files on your disk.</p>
+    </div>
+  </div>
+
+  <h3>Where the idea came from</h3>
+  <p>Client work was going out as tabbed, filterable HTML because it organises dense material better than a linear document. Reviewers were still working in Google Docs, where threaded comments sit in the margin. Feedback came back by email, or was copied by hand into the page, where it froze.</p>
+  <p>LivingLink is the living version of those copied notes. The author called it a doorknob: the part that lets a document-minded reviewer into an interactive page without being told how.</p>
+
+  <h3>What it refuses</h3>
+  <ul>
+    <li><b>It does not build a backend.</b> Storage, sync and identity sit behind a small seam. The default keeps comments in your own browser.</li>
+    <li><b>It does not hand anchoring to a comment vendor.</b> A vendor whose anchors ignore state would bring back the problem this exists to solve.</li>
+    <li><b>It does not flatten the page into a document.</b> The interactive page stays interactive, and the comments adapt to it.</li>
+  </ul>
+</section>
+
+<!-- ===================== WHY NOW ===================== -->
+<section class="tab-panel" id="tab-why">
+  <div class="secthead"><span class="src new">New draft</span></div>
+  <h2>Information is moving out of documents</h2>
+  <p class="lead">More of what organisations need people to read is being published as pages: program guides, product specifications, policies, brand systems. A page can be found, linked to, measured and corrected in ways a PDF cannot.</p>
+  <p>One statement of that view is <a href="https://thinkpodagency.com/why-important-information-should-live-on-your-website-instead-of-pdfs/">ThinkPod's argument for moving important information out of PDFs</a>. It is an agency's post and gives no figures, so it is cited here as the view and no more.</p>
+
+  <h3>What the move leaves behind</h3>
+  <p>A PDF or a Google Doc comes with a way to review it: comments in the margin, markup, a sign-off. A web page has none of that. The people who used to mark up the document are left with screenshots and email.</p>
+  <p>Pages also have more shape than documents, and they change more often. A page has sections, tabs and filters, and it is corrected in place. Feedback tools made for static pages lose their place when either happens.</p>
+  <p>LivingLink was built for those two conditions. A comment knows which state of the page it belongs to, and it stays with its content when the page changes.</p>
+
+  <h3>Who would feel it first</h3>
+  <p>Teams with formal review are the likeliest to miss the document's margin: compliance, accreditation, clinical and policy content, brand approval.</p>
+  <div class="note"><p>This is a guess. Nobody in those teams has been asked yet.</p></div>
+</section>
+
+<!-- ===================== HOW IT WORKS ===================== -->
+<section class="tab-panel" id="tab-how">
+  <div class="secthead"><span class="src">Existing</span><span class="src new">New draft</span></div>
+  <h2>Three steps to a page people can comment on</h2>
+  <div class="three">
+    <div class="cardx">
+      <span class="n">One</span>
+      <h3>Process the page</h3>
+      <p>One build command adds LivingLink to an HTML page and writes a copy beside the original. A small adapter tells the layer how that site's sections and filters work.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Two</span>
+      <h3>Send the link</h3>
+      <p>Reviewers open the page, type a name and comment. There are no accounts and nothing to install. The link carries a key, and only people holding it can read or add comments.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Three</span>
+      <h3>Review in state</h3>
+      <p>Comments appear in the view they were made in. Read as doc puts every section in one scroll for a reviewer who prefers a linear read.</p>
+    </div>
+  </div>
+
+  <h3>What a reviewer sees</h3>
+  <ul>
+    <li>An invitation in the page, and one field for a name.</li>
+    <li>Comment cards in the right margin, level with what they are about.</li>
+    <li>A count of comments waiting on other sections, so nothing is missed.</li>
+    <li>A plain notice if the page cannot save what they write.</li>
+  </ul>
+
+  <h3>What the author gets</h3>
+  <ul>
+    <li>Comments that stay with their text when the page is edited or rebuilt.</li>
+    <li>A tray for the few that lose their place, with the nearest matches offered.</li>
+    <li>Every comment exported as Markdown, grouped by section, or copied in a form an assistant can act on.</li>
+    <li>The comments themselves, as files on a server the author runs.</li>
+  </ul>
+</section>
+
+<!-- ===================== WHERE IT STANDS ===================== -->
+<section class="tab-panel" id="tab-stands">
+  <div class="secthead"><span class="src">Existing</span></div>
+  <h2>A proof of concept, shown on real pages</h2>
+  <p class="lead">The first column was checked on 13 November 2026, in a browser or by the test suite. The second column has not been done.</p>
+  <div class="two">
+    <div class="cardx">
+      <span class="n">Working</span>
+      <ul>
+        <li>State-aware comments on four different pages: a five-tab explainer, a report with tabs and a region filter, a multi-screen tool, and a brand system site from another project.</li>
+        <li>Anchors that survive edits, and a tray for comments that cannot be placed.</li>
+        <li>Shared review through a keyed link, between two browser tabs on one computer.</li>
+        <li>Comments copied out for an assistant, and its replies pasted back into their threads.</li>
+        <li>Narrow windows. Comments shrink to a column of markers, or to one line that steps through them, and never sit on the page's text.</li>
+        <li>Ninety-three automated tests of the anchoring, the state rule, the local store and the assistant handoff.</li>
+      </ul>
+    </div>
+    <div class="cardx">
+      <span class="n">Not yet</span>
+      <ul>
+        <li>Run on an outside server, or with a second person.</li>
+        <li>Telling the author when a comment arrives.</li>
+        <li>A real phone. The narrow layouts were checked at phone width in a desktop browser.</li>
+        <li>Comments on images, apart from figures that carry a title.</li>
+        <li>Any site without an adapter written for it by hand.</li>
+      </ul>
+    </div>
+  </div>
+  <p>The first real document was a governance framework for community colleges, made with a collaborator who reviews in Google Docs.</p>
+</section>
+
+<!-- ===================== WHAT ELSE IS OUT THERE ===================== -->
+<section class="tab-panel" id="tab-others">
+  <div class="secthead"><span class="src new">New draft</span></div>
+  <h2>What else is out there</h2>
+  <div class="note"><p>Read from each tool's own pages and from search results on 13 November 2026. None of these tools was tried.</p></div>
+  <p class="lead">LivingLink is not the first to make a comment aware of the state of a page. What the reading did not turn up is another tool that does all of what it does together.</p>
+
+  <h3>Six kinds of neighbour</h3>
+  <table class="cmp">
+    <thead>
+      <tr><th>Kind</th><th>Examples</th><th>What their own pages say</th></tr>
+    </thead>
+    <tbody>
+      <tr><th>Comment toolkits built into an app</th><td>Velt, Liveblocks</td><td>A developer builds them in. Velt scopes comments to locations within a document and gives a dashboard's filters as an example.</td></tr>
+      <tr><th>Open web annotation</th><td>Hypothesis</td><td>Attaches a note to the words and re-attaches it after an edit. Nothing read about the state of a page.</td></tr>
+      <tr><th>Website feedback for agencies</th><td>BugHerd, Marker.io, Pastel, Markup.io</td><td>Notes pinned to an element or a point on a live site, with a screenshot.</td></tr>
+      <tr><th>Review inside a platform</th><td>Vercel, Netlify, Webflow</td><td>Comments on pages made or hosted there, for people with an account or a role there.</td></tr>
+      <tr><th>Review layers for pages made by AI tools</th><td>Margin, reviewjs, Commentable HTML, Plannotator</td><td>Comment on the page as you would a document, then hand the feedback to an assistant. Local, or one reviewer at a time, in what was read.</td></tr>
+      <tr><th>Business dashboards</th><td>Power BI, Strategy</td><td>A comment stores the filters in force and puts them back when it is opened.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>What the reading changed</h3>
+  <p>This project's record said that no other tool anchored comments to state, and that Velt could not. Both statements were too strong.</p>
+  <ul>
+    <li><b>Three of the tools read have comments that know a page's state.</b> Velt scopes them. Power BI and Strategy store the state and restore it.</li>
+    <li><b>Attaching a comment to the words is an established idea.</b> Its known weakness is landing on similar text somewhere else, the same fault LivingLink fixed for multi-screen pages on 13 November.</li>
+    <li><b>The nearest group is new.</b> Tools for reviewing a page an assistant made did not appear in the first survey in June.</li>
+  </ul>
+
+  <h3>What still looks distinctive</h3>
+  <p>No tool read offered all five of these together.</p>
+  <ul>
+    <li>It is added to an ordinary page with no work by the site's developer.</li>
+    <li>It follows several kinds of state at once, shows a comment only where it belongs, and counts the rest.</li>
+    <li>Its anchors follow the words through a rebuild, and comments that cannot be placed wait in a tray.</li>
+    <li>Review is shared by a link, with no accounts, on a server the author runs.</li>
+    <li>It reads like a document: a margin, and a linear mode for every section in one scroll.</li>
+  </ul>
+  <p>Each of the five exists somewhere. The claim is the combination, and it rests on one afternoon of reading pages.</p>
+
+  <h3>It does not have to be the only one</h3>
+  <p>LivingLink does not need to be the only tool of its kind, or to own this corner of the market. It needs to be useful to the people who review these pages. A couple of well-chosen connections would do more for that than being first.</p>
+
+  <h3>What to take from the neighbours</h3>
+  <ul>
+    <li><b>Go to the state.</b> In the dashboards, opening a comment takes you to the view it was made in. LivingLink shows where a comment is and cannot yet take you there.</li>
+    <li><b>Hand off to an assistant.</b> Every tool in the nearest group leads with this. LivingLink now has a first version: comments are copied out for an assistant, and its replies are pasted back into their threads.</li>
+    <li><b>Keep sharing.</b> The nearest group is local or passes files around. A shared room behind a link is where LivingLink differs from them.</li>
+    <li><b>Watch the platforms.</b> Whoever makes or hosts the pages can add comments for their own surface, and several have.</li>
+  </ul>
+
+  <h3>Read for this section</h3>
+  <ul>
+    <li><a href="https://velt.dev/docs/key-concepts/overview">Velt: key concepts, locations</a></li>
+    <li><a href="https://learn.microsoft.com/en-us/power-bi/explore-reports/end-user-comment">Power BI: add comments to dashboards and reports</a></li>
+    <li><a href="https://web.hypothes.is/blog/fuzzy-anchoring/">Hypothesis: fuzzy anchoring</a></li>
+    <li><a href="https://website-cks.pages.dev/margin/">Margin</a></li>
+    <li><a href="https://reviewjs.github.io/annotate/">reviewjs annotate.js</a></li>
+  </ul>
+  <p>The full list of thirteen pages read, and the tools that were only listed, is in the project's survey note.</p>
+</section>
+
+<!-- ===================== WHAT IT COULD CONNECT TO ===================== -->
+<section class="tab-panel" id="tab-connects">
+  <div class="secthead"><span class="src new">New draft</span></div>
+  <h2>What it could connect to</h2>
+  <div class="note"><p>The Google Docs and Notion parts were read from those companies' own documentation on 13 November 2026. Nothing in this section has been built or run.</p></div>
+  <p class="lead">LivingLink keeps two things for itself: where a comment is anchored, and the margin it appears in. Other platforms can supply what sits around those. The test for any connection is whether it carries a comment's state with it.</p>
+
+  <h3>Where it fits well</h3>
+  <div class="three">
+    <div class="cardx">
+      <span class="n">Hearing about it</span>
+      <h3>Slack, Teams or email</h3>
+      <p>A message when a comment lands, linking straight to it in its section. Today the author has to go and look.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Doing the work</span>
+      <h3>A task tracker</h3>
+      <p>A comment becomes a task in Linear, Jira, GitHub Issues or a Notion database, and links back to the paragraph and the view it was about.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Acting on it</span>
+      <h3>An AI assistant</h3>
+      <p>An assistant reads the comments on a page, revises the copy, replies and resolves. The comments stay with their text when the page is rebuilt.</p>
+    </div>
+  </div>
+  <p>Two more belong on this list. Signing in with Google or Microsoft would put real names where typed ones are now. Writing a finished round of review out as a document would give stakeholders who never open the page a record in the form they expect.</p>
+  <p>Of these, only Google Docs and Notion have been looked into. The rest are candidates.</p>
+
+  <h3>Google Docs and Notion, as documented</h3>
+  <table class="cmp">
+    <thead>
+      <tr><th></th><th>Google Docs</th><th>Notion</th></tr>
+    </thead>
+    <tbody>
+      <tr><th>Comment on an exact phrase</th><td>Yes</td><td>No. On a whole block, or on the page.</td></tr>
+      <tr><th>Reply and resolve</th><td>Yes</td><td>Reply, yes. Resolve only through its assistant tools.</td></tr>
+      <tr><th>Something like tabs</th><td>Yes</td><td>None seen in what was read</td></tr>
+      <tr><th>Hear about new comments</th><td>By checking for changes</td><td>Yes, it sends an event</td></tr>
+      <tr><th>A filter state, such as a region</th><td>No</td><td>No</td></tr>
+      <tr><th>Run LivingLink inside its published pages</th><td>No route found</td><td>No route found</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Open as a Google Doc</h3>
+  <p>LivingLink already has Read as doc for reviewers who prefer a linear read. Google's documentation points to a stronger form. The page could be written out as a real Google Doc, with one tab for each section and every comment on the sentence it was made about.</p>
+  <p>Comments made in that Doc could then be read back and placed on the page by the words they quote, because that is how LivingLink anchors already. The reviewer would stay in the tool they know and the page would still hold the record.</p>
+  <ul>
+    <li>Can a comment made this way carry the reviewer's name, or only the account that ran the export?</li>
+    <li>What does Google require of an app that asks for access to someone's documents?</li>
+    <li>Where does a filter state go, when a Doc has no place for one?</li>
+  </ul>
+
+  <h3>Notion</h3>
+  <p>Notion documents comments on whole blocks and sends an event when one is added. It cannot anchor a comment to a phrase. That makes it a fair place to track comments as tasks and a weaker place to mirror a review.</p>
+
+  <h3>Where it does not fit</h3>
+  <ul>
+    <li><b>Inside a published Notion page or Google Doc.</b> Neither documents a way for the owner to add a script, so the layer has nowhere to load.</li>
+    <li><b>Any mirror that drops the state.</b> A comment copied into another tool without its tab and filter is the problem LivingLink was built to solve.</li>
+  </ul>
+
+  <h3>Where the pages come from</h3>
+  <p>Two more connections sit on the other side, with the tools that make the pages. Site builders such as Webflow, Framer and WordPress are where the one-line install would go, if they let an owner add a script. That has not been checked. Page generators could ship the layer inside every page they make.</p>
+
+  <h3>The two or three that would matter</h3>
+  <p>A couple of connections, done well, would be enough to make LivingLink useful.</p>
+  <ul>
+    <li><b>The assistant.</b> It matches how these pages are made, and it depends on comments surviving a rebuild. A first version exists: a person carries the comments to the assistant and its replies back.</li>
+    <li><b>Notifications.</b> Small, and they close a gap in the invite that exists today.</li>
+    <li><b>A trial of the Google Doc.</b> One page, one reviewer, to answer the three questions above.</li>
+  </ul>
+
+  <h3>Read for this section</h3>
+  <ul>
+    <li><a href="https://developers.google.com/workspace/docs/api/how-tos/suggestions">Google Docs API: work with comments and suggestions</a></li>
+    <li><a href="https://developers.google.com/workspace/drive/api/guides/manage-comments">Google Drive API: manage comments and replies</a></li>
+    <li><a href="https://developers.notion.com/guides/data-apis/working-with-comments">Notion: working with comments</a></li>
+    <li><a href="https://developers.notion.com/reference/webhooks-events-delivery">Notion: webhook event types</a></li>
+  </ul>
+</section>
+
+<!-- ===================== WHERE IT COULD GO ===================== -->
+<section class="tab-panel" id="tab-next">
+  <div class="secthead"><span class="src new">New draft</span></div>
+  <h2>From one studio's pages to anyone's</h2>
+  <div class="note"><p>Nothing in this section is decided. The project's own record still calls LivingLink a proof of concept.</p></div>
+  <p class="lead">LivingLink began as a tool for pages made for client work. The same layer now runs on a site from another project with no change to that site. The next question is whether someone else could put it on theirs.</p>
+
+  <div class="three">
+    <div class="cardx">
+      <span class="n">Install</span>
+      <h3>One line, added by the site's owner</h3>
+      <p>Today someone who knows the code writes an adapter for each site. A site owner should be able to add one line and have common layouts recognised.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Review</span>
+      <h3>A round you can run</h3>
+      <p>Invite by link, see who has commented, hear when something arrives, close the round.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Record</span>
+      <h3>Feedback that outlives the round</h3>
+      <p>Comments kept with the state they were made in, so a decision can be traced to the paragraph and the view it was about.</p>
+    </div>
+  </div>
+
+  <h3>Questions still open</h3>
+  <ul>
+    <li>Will reviewers comment on a web page as readily as they do in a document?</li>
+    <li>How far can a typed name go before a review needs real sign-in?</li>
+    <li>What should happen to a round of comments when the page it was about is replaced?</li>
+    <li>Is this for people who build pages, or for the people who approve them?</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <img src="assets/brand/logo-mark.svg" alt="" width="25" height="30">
+    <span>LivingLink &middot; FutureObjects Research &middot; a working document</span>
+  </div>
+</footer>
+
+<script>
+  // Show one section. Global and named switchTab on purpose: the comment
+  // layer's tab adapter looks for exactly this.
+  function switchTab(name){
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+    var panel=document.getElementById('tab-'+name);
+    var btn=null;
+    document.querySelectorAll('.tab-btn').forEach(function(b){ if((b.getAttribute('onclick')||'').indexOf("'"+name+"'")>=0) btn=b; });
+    if(!panel){ panel=document.querySelector('.tab-panel'); btn=document.querySelector('.tab-btn'); }
+    panel.classList.add('active'); if(btn) btn.classList.add('active');
+    var bar=document.querySelector('.tabs');
+    if(bar && bar.getBoundingClientRect().top<=0) window.scrollTo(0, window.scrollY + bar.getBoundingClientRect().top);
+  }
+</script>
+</body>
+</html>
