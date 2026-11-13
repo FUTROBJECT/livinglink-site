@@ -8,6 +8,7 @@ Static marketing site for LivingLink (speculative concept, FutureObjects Researc
 | `design-system.html` | Brand book / design system |
 | `demo.html` | Live working demo (local-store build — comments persist per-visitor in their browser) |
 | `overview.html` | Working document: what LivingLink is and where it could go. A copy of `02-brand/overview.html`, without the comment layer. Marked `noindex`; shared by link. |
+| `overview-review.html` | The same overview with the comment layer, for shared review. Comments go to the sync server at `livinglink-sync.fly.dev` and need an invite key in the link (`?k=…`); without one the page says comments are not saved. A copy of `02-brand/overview-shared.html`. Marked `noindex`. |
 | `assets/brand/` | Canonical logo files |
 
 Everything is self-contained static HTML — no build step, no dependencies.

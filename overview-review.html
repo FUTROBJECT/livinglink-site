@@ -1,0 +1,2566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>LivingLink: what it is, and where it could go</title>
+<!--
+  A working document. Copy marked "Existing" is taken or adapted from the
+  project's own record (landing page, founding page, PRD). Copy marked "New
+  draft" was written on 13 November 2026 and is waiting for the author.
+
+  Brand: tokens from landing.html / design-system.html. The logo is the
+  canonical file in assets/brand/, referenced, never redrawn (DR-0006).
+  Tabs follow the .tab-btn / .tab-panel / switchTab() shape so the existing
+  tabpanel adapter can add the comment layer:
+    cd 03-layer && python3 inject.py ../02-brand/overview.html ../02-brand/overview-commented.html src/adapters/tabpanel.js
+-->
+<style>
+  :root{
+    --ink:#16171D; --ink-2:#4A4D5A; --muted:#8A8E9C;
+    --paper:#F7F5F0; --card:#FFFFFF; --line:#E7E4DC;
+    --iris:#635BFF; --iris-deep:#5851E6; --iris-soft:#EFEEFF;
+    --marker:#FFD54A; --marker-soft:#FFF3CC;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Inter",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font);background:var(--paper);color:var(--ink);
+    font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;}
+  p,h1,h2,h3,li{text-wrap:pretty;}
+  a{color:var(--iris-deep);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;}
+  a:hover{color:var(--iris);}
+  .wrap{max-width:820px;margin:0 auto;padding:0 28px;}
+
+  /* masthead: the lockup on paper, with its clear space */
+  .mast{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:30px 28px 0;}
+  .mast img{display:block;height:38px;width:auto;}
+  .mast .kind{font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:right;}
+
+  /* opening */
+  .open{padding:62px 28px 34px;}
+  h1{font-size:clamp(32px,5vw,50px);font-weight:700;letter-spacing:-.03em;line-height:1.08;margin:0 0 18px;max-width:700px;}
+  /* the marker highlight: the brand's one gesture, used once */
+  .hl{background:var(--marker);border-radius:8px;padding:1px 10px 3px;box-decoration-break:clone;-webkit-box-decoration-break:clone;}
+  .lede{font-size:18px;color:var(--ink-2);max-width:620px;margin:0;}
+
+  /* which copy is which */
+  .key{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin:26px 0 0;font-size:12.5px;color:var(--ink-2);}
+  .src{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+    border-radius:999px;padding:3px 10px;white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--ink-2);}
+  .src.new{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .tagline{margin:0 0 10px;}
+
+  /* tabs: plain, on paper. The frosted surface is the comment dock's alone. */
+  .tabs{position:sticky;top:0;z-index:30;background:var(--paper);border-bottom:1px solid var(--line);margin-top:8px;}
+  /* seven sections do not fit one row at every width: wrap to a second row
+     so none is hidden off the edge */
+  .tabs .wrap{display:flex;flex-wrap:wrap;gap:0 4px;}
+  .tab-btn{appearance:none;border:0;background:transparent;font:inherit;font-size:14px;font-weight:500;color:var(--ink-2);
+    padding:12px 12px 10px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;}
+  .tab-btn:hover{color:var(--iris-deep);}
+  .tab-btn.active{color:var(--ink);font-weight:600;border-bottom-color:var(--ink);}
+  .tab-btn:focus-visible{outline:2px solid var(--iris);outline-offset:-3px;border-radius:6px;}
+
+  .tab-panel{display:none;padding:44px 0 30px;}
+  .tab-panel.active{display:block;}
+  h2{font-size:27px;font-weight:700;letter-spacing:-.025em;line-height:1.2;margin:0 0 14px;max-width:660px;}
+  h3{font-size:19px;font-weight:650;letter-spacing:-.015em;line-height:1.3;margin:40px 0 10px;}
+  .tab-panel p{margin:0 0 14px;max-width:660px;color:var(--ink-2);}
+  .tab-panel p.lead{font-size:17.5px;color:var(--ink);}
+  .tab-panel ul{margin:0 0 14px;padding-left:20px;max-width:660px;color:var(--ink-2);}
+  .tab-panel li{margin:0 0 7px;}
+  .tab-panel li b,.tab-panel p b{color:var(--ink);font-weight:600;}
+
+  /* three-up cards */
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:26px 0 8px;}
+  .cardx{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 20px 16px;}
+  .cardx h3{margin:0 0 6px;font-size:16.5px;}
+  .cardx p{font-size:14.5px;margin:0;line-height:1.6;}
+  .cardx .n{display:block;font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  @media(max-width:760px){.three{grid-template-columns:1fr;}}
+
+  /* a comment card, to show the object itself (values from the design system) */
+  .specimen{display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start;background:var(--card);
+    border:1px solid var(--line);border-radius:18px;padding:24px;margin:28px 0 8px;}
+  .specimen .page h4{margin:0 0 8px;font-size:15px;font-weight:650;}
+  .specimen .page p{font-size:14px;margin:0 0 9px;color:var(--ink-2);}
+  .specimen .page .on{background:rgba(255,221,87,.34);box-shadow:0 0 0 2px rgba(255,221,87,.34);border-radius:3px;}
+  .specimen .pills{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;}
+  .specimen .pills span{font-size:11.5px;font-weight:500;color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:3px 11px;}
+  .specimen .pills span.cur{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .cmt{background:#fff;border:1px solid #e3e8ee;border-radius:12px;box-shadow:0 1px 3px rgba(26,31,54,.08);padding:13px 15px;font-size:13px;line-height:1.5;}
+  .cmt .q{font-size:11.5px;color:#8792a2;background:#f7f8fa;border-left:2px solid var(--iris);padding:5px 9px;border-radius:0 6px 6px 0;margin-bottom:8px;}
+  .cmt .who{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px;font-weight:600;font-size:12.5px;}
+  .cmt .who i{font-style:normal;display:inline-flex;align-items:center;gap:7px;}
+  .cmt .av{width:22px;height:22px;border-radius:50%;background:#2c6e9c;color:#fff;font-size:9.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;}
+  .cmt .st{font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--iris-deep);background:var(--iris-soft);border-radius:999px;padding:2.5px 8px;}
+  .cmt .t{color:#4f566b;}
+  .specimen .cap{grid-column:1/-1;font-size:12.5px;color:var(--muted);margin:2px 0 0;}
+  @media(max-width:760px){.specimen{grid-template-columns:1fr;}}
+
+  /* notes and status */
+  .note{border-left:3px solid var(--ink);background:var(--card);border-radius:0 12px 12px 0;padding:14px 18px;margin:22px 0;max-width:660px;}
+  .note p{margin:0;color:var(--ink);font-size:15px;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0 8px;}
+  .two .cardx ul{padding-left:18px;margin:0;font-size:14.5px;}
+  .two .cardx li{margin-bottom:8px;}
+  @media(max-width:760px){.two{grid-template-columns:1fr;}}
+  .secthead{display:flex;align-items:center;gap:10px;margin:0 0 16px;}
+
+  /* a plain comparison table */
+  table.cmp{width:100%;max-width:720px;border-collapse:collapse;margin:14px 0 8px;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:14.5px;}
+  table.cmp th,table.cmp td{text-align:left;vertical-align:top;padding:11px 16px;border-top:1px solid var(--line);color:var(--ink-2);}
+  table.cmp thead th{border-top:0;font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+  table.cmp tbody th{font-weight:600;color:var(--ink);width:38%;}
+
+  footer{border-top:1px solid var(--line);margin-top:30px;padding:26px 0 120px;}
+  footer .wrap{display:flex;align-items:center;gap:14px;color:var(--muted);font-size:12.5px;}
+  footer img{height:30px;width:auto;display:block;}
+
+  @media print{
+    .tabs{display:none;} .tab-panel{display:block !important;padding:18px 0;break-inside:avoid-page;}
+    body{background:#fff;} footer{padding-bottom:20px;}
+  }
+</style>
+<style id="ll-styles">
+/* ===== Living Link comment layer =====
+   Token-driven chrome (Stripe/Notion/Linear-inspired). Self-contained: light
+   defaults at :root, dark overrides when the HOST sets <html data-theme="dark">.
+   Hosts without a theme attribute (e.g. explainer.html) stay light. */
+:root{
+  --ll-font:-apple-system,BlinkMacSystemFont,"Segoe UI","Inter",Roboto,Helvetica,Arial,sans-serif;
+  --ll-surface:#ffffff;
+  --ll-surface-2:#f7f8fa;
+  --ll-text:#1a1f36;
+  --ll-text-2:#4f566b;
+  --ll-muted:#8792a2;
+  --ll-border:#e3e8ee;
+  --ll-border-strong:#c9d0da;
+  --ll-accent:#635bff;
+  --ll-accent-text:#5851e6;
+  --ll-accent-soft:#f0efff;
+  --ll-ok:#1a7a3a;
+  --ll-ok-soft:#e8f6ed;
+  --ll-warn-text:#8a5a0a;
+  --ll-warn-soft:#fff4e5;
+  --ll-warn-border:#f0c98a;
+  --ll-hl:rgba(255,221,87,.30);
+  --ll-tint:rgba(255,213,74,.16);
+  --ll-shadow-sm:0 1px 3px rgba(26,31,54,.08);
+  --ll-shadow-md:0 4px 14px rgba(26,31,54,.12);
+  --ll-shadow-lg:0 12px 36px rgba(26,31,54,.18);
+}
+[data-theme="dark"]{
+  --ll-surface:#191b23;
+  --ll-surface-2:#21242e;
+  --ll-text:#e9eaf0;
+  --ll-text-2:#b4b8c5;
+  --ll-muted:#7c8296;
+  --ll-border:#272a35;
+  --ll-border-strong:#3a3e4d;
+  --ll-accent:#7b80f7;
+  --ll-accent-text:#9a9efb;
+  --ll-accent-soft:#23243a;
+  --ll-ok:#4ccb7e;
+  --ll-ok-soft:#16271d;
+  --ll-warn-text:#e8b04a;
+  --ll-warn-soft:#2a2113;
+  --ll-warn-border:#5a4517;
+  --ll-hl:rgba(255,213,74,.22);
+  --ll-tint:rgba(255,213,74,.11);
+  --ll-shadow-sm:0 1px 3px rgba(0,0,0,.5);
+  --ll-shadow-md:0 4px 14px rgba(0,0,0,.55);
+  --ll-shadow-lg:0 12px 36px rgba(0,0,0,.6);
+}
+
+/* The open rail never sits on the page's text. It takes a gutter from the
+   page (--ll-rail-w), and the stylesheet picks how the rail is drawn from the
+   window's width, telling the core through --ll-mode:
+     above 1100px   full   every card beside its block, a 360px gutter
+     781 to 1100px  strip  a marker per comment in a 52px gutter; opening one
+                           shows its card and the page gives it 320px
+     780px, under   line   no gutter; one line along the bottom steps through
+                           the comments (see "narrow windows" below) */
+:root{ --ll-rail-w:360px; }
+body{position:relative;}
+body.ll-open{margin-right:var(--ll-rail-w);transition:margin .25s ease;}
+@media screen and (min-width:781px) and (max-width:1100px){
+  :root{ --ll-rail-w:52px; }
+  body.ll-has-sel{ --ll-rail-w:320px; }
+  /* opening a card re-wraps the page's text; the core then scrolls the block
+     back into view, which needs the new layout at once, so no animation here */
+  body.ll-open{transition:none;}
+  #ll-rail{--ll-mode:strip;}
+}
+
+.ll-anchored{background:var(--ll-hl);box-shadow:0 0 0 2px var(--ll-hl);border-radius:3px;cursor:pointer;}
+/* a block with an open comment in this view: a faint wash over whatever
+   background the host gave it. It is laid on as a background image, so the
+   host's own background colour stays underneath and its text stays readable
+   on a dark page as well as a light one. A click opens the comment. */
+.ll-has{background-image:linear-gradient(var(--ll-tint),var(--ll-tint));cursor:pointer;}
+.ll-has.ll-anchored{background-image:none;}
+body.ll-commenting [data-ll]{cursor:pointer;}
+/* a tint, not a solid fill: the block's own text must stay readable on a
+   dark host as well as a light one */
+body.ll-commenting [data-ll]:hover{background:color-mix(in srgb, var(--ll-accent) 20%, transparent);box-shadow:0 0 0 2px var(--ll-accent);border-radius:3px;}
+.ll-flash{animation:ll-flash 1.4s ease;}
+@keyframes ll-flash{0%{background:var(--ll-hl);box-shadow:0 0 0 3px var(--ll-accent);}100%{background:transparent;box-shadow:none;}}
+
+/* margin rail — a fixed gutter on the right of the viewport, never over content.
+   pointer-events:none lets clicks fall through the empty gutter; cards re-enable. */
+#ll-rail{position:fixed;top:0;right:0;width:calc(var(--ll-rail-w) - 8px);height:100vh;display:none;overflow:hidden;
+  font-family:var(--ll-font);pointer-events:none;z-index:55;}
+body.ll-open #ll-rail{display:block;}
+.ll-card{position:absolute;right:16px;width:calc(var(--ll-rail-w) - 42px);box-sizing:border-box;pointer-events:auto;background:var(--ll-surface);
+  border:1px solid var(--ll-border);
+  border-radius:12px;box-shadow:var(--ll-shadow-sm);padding:13px 15px;font-size:13px;line-height:1.5;
+  color:var(--ll-text);
+  transition:top .18s ease, box-shadow .15s, border-color .15s, background .25s, transform .15s;}
+.ll-card:hover{box-shadow:var(--ll-shadow-md);transform:translateY(-1px);}
+.ll-card.ll-resolved{background:var(--ll-surface);opacity:.78;}
+.ll-card.ll-resolved:hover{opacity:1;}
+.ll-card.ll-sel{border-color:var(--ll-accent);box-shadow:0 0 0 3px var(--ll-accent-soft),var(--ll-shadow-md);}
+.ll-snip{font-size:11.5px;color:var(--ll-muted);margin-bottom:8px;background:var(--ll-surface-2);
+  border-left:2px solid var(--ll-accent);padding:5px 9px;border-radius:0 6px 6px 0;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.ll-card.ll-resolved .ll-snip{border-left-color:var(--ll-ok);}
+.ll-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px;}
+.ll-who{display:flex;align-items:center;gap:7px;font-weight:600;font-size:12.5px;color:var(--ll-text);}
+.ll-av{width:22px;height:22px;border-radius:50%;color:#fff;font-size:9.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex:none;
+  box-shadow:0 0 0 2px var(--ll-surface),0 1px 2px rgba(0,0,0,.15);}
+.ll-badge{font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ll-accent-text);background:var(--ll-accent-soft);border-radius:999px;padding:2.5px 8px;white-space:nowrap;}
+.ll-card.ll-resolved .ll-badge{color:var(--ll-ok);background:var(--ll-ok-soft);}
+.ll-text{margin:4px 0 6px;color:var(--ll-text-2);}
+.ll-reply{position:relative;margin:6px 0 6px 10px;padding:6px 10px;font-size:12.5px;color:var(--ll-text-2);
+  background:var(--ll-surface-2);border-radius:8px;border-left:2px solid var(--ll-border-strong);}
+.ll-reply .ll-who{font-size:11.5px;margin-bottom:2px;}
+.ll-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.ll-btn{font-family:var(--ll-font);font-size:11.5px;font-weight:500;border:1px solid transparent;
+  background:var(--ll-surface-2);color:var(--ll-text-2);
+  padding:4.5px 11px;border-radius:7px;cursor:pointer;transition:border-color .12s,color .12s,background .12s;}
+.ll-btn:hover{border-color:var(--ll-border-strong);color:var(--ll-text);background:var(--ll-surface);}
+.ll-btn.ll-pri{background:var(--ll-accent);color:#fff;border-color:var(--ll-accent);}
+.ll-btn.ll-pri:hover{background:var(--ll-accent-text);border-color:var(--ll-accent-text);color:#fff;}
+.ll-btn.ll-danger:hover{border-color:#c0392b;color:#c0392b;background:var(--ll-surface);}
+.ll-replybox{display:none;margin-top:7px;}
+.ll-replybox.ll-show{display:block;}
+.ll-replybox input{width:100%;border:1px solid var(--ll-border);border-radius:6px;padding:6px 8px;
+  font-family:var(--ll-font);font-size:12.5px;box-sizing:border-box;background:var(--ll-surface);color:var(--ll-text);}
+.ll-replybox input:focus{outline:none;border-color:var(--ll-accent);box-shadow:0 0 0 3px var(--ll-accent-soft);}
+
+/* ===== strip mode: a marker per comment =====
+   The marker is a card shrunk to its author's initial. It sits at the page's
+   edge of the rail, level with its block, and opens the card on a click. */
+.ll-card.ll-mini{left:7px;right:auto;width:30px;height:30px;padding:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:1;}
+.ll-card.ll-mini .ll-av{width:22px;height:22px;box-shadow:none;}
+.ll-card.ll-mini.ll-resolved{border-color:var(--ll-ok);opacity:.72;}
+.ll-card.ll-mini:hover,.ll-card.ll-mini:focus-visible{opacity:1;transform:none;outline:none;
+  border-color:var(--ll-accent);box-shadow:0 0 0 3px var(--ll-accent-soft);}
+.ll-mini-n{position:absolute;top:-5px;right:-6px;min-width:15px;height:15px;box-sizing:border-box;padding:0 3px;
+  border-radius:999px;background:var(--ll-accent);color:#fff;font-size:9px;font-weight:700;line-height:15px;text-align:center;}
+
+/* ===== line mode: "‹ 2 of 5 ›" and a one-line look at that comment ===== */
+.ll-nav{display:flex;align-items:center;gap:6px;flex:none;min-height:36px;
+  font-family:var(--ll-font);font-size:12.5px;line-height:1.4;color:var(--ll-text-2);}
+.ll-nav-b{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--ll-border);padding:0;
+  background:var(--ll-surface);color:var(--ll-text);font-family:var(--ll-font);font-size:19px;line-height:1;cursor:pointer;}
+.ll-nav-b:disabled{opacity:.35;cursor:default;}
+.ll-nav-b:not(:disabled):hover{border-color:var(--ll-border-strong);}
+.ll-nav-n{flex:none;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ll-text);}
+.ll-nav-sp{flex:1;}
+.ll-nav-peek{flex:1;min-width:0;display:flex;align-items:center;gap:7px;border:0;background:transparent;
+  color:var(--ll-text-2);font-family:var(--ll-font);font-size:12.5px;text-align:left;padding:6px 2px;cursor:pointer;}
+.ll-nav-peek span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ll-nav-peek b{color:var(--ll-text);font-weight:600;}
+
+/* ===== narrow windows: the rail as a panel along the bottom =====
+   Under 780px a side gutter would leave the page too narrow to read, so the
+   rail is a panel above the dock: one line that steps through the comments,
+   which grows to hold a card while one is open. The page gets room underneath
+   so its last lines can be scrolled clear of the panel. --ll-sheet-h is the
+   panel's height, written by the core. */
+@media screen and (max-width:780px){
+  body.ll-open{margin-right:0;}
+  body.ll-open:has(#ll-rail:not(:empty)){margin-bottom:calc(var(--ll-sheet-h,0px) + 84px);}
+  #ll-rail{--ll-mode:line;top:auto;bottom:68px;left:8px;right:8px;width:auto;height:auto;max-height:40vh;
+    overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;pointer-events:auto;
+    flex-direction:column;gap:6px;padding:6px;background:var(--ll-surface-2);border:1px solid var(--ll-border);
+    border-radius:14px;box-shadow:var(--ll-shadow-lg);scrollbar-width:thin;scrollbar-color:var(--ll-border-strong) transparent;}
+  body.ll-open #ll-rail{display:flex;}
+  body.ll-open #ll-rail:empty{display:none;}
+  #ll-rail .ll-card{position:static;width:auto;flex:none;transition:box-shadow .15s, border-color .15s, background .25s;}
+  #ll-rail .ll-card:hover{transform:none;}
+  /* while a card is open the panel is tall and the block it is about sits
+     just above it: the "comments elsewhere" chip would lie on that block */
+  body.ll-has-sel #ll-elsewhere{display:none;}
+  /* chips sit above the panel; the orphan tray takes the panel's place */
+  body.ll-open:has(#ll-rail:not(:empty)) #ll-status{bottom:calc(var(--ll-sheet-h,0px) + 76px);}
+  body.ll-open:has(#ll-tray.ll-show) #ll-rail{display:none;}
+  body.ll-open:has(#ll-tray.ll-show) #ll-status{bottom:66px;}
+}
+
+/* ===== the dock — ALL layer chrome lives in one floating pill (bottom center),
+   like a media-player control bar: a familiar affordance instead of buttons in
+   four corners. Status chips stack just above it. ===== */
+#ll-dock{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:61;
+  display:flex;align-items:center;gap:2px;padding:5px;
+  background:color-mix(in srgb, var(--ll-surface) 82%, transparent);
+  -webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);
+  border:1px solid var(--ll-border);border-radius:999px;box-shadow:var(--ll-shadow-md);
+  font-family:var(--ll-font);}
+@supports not (backdrop-filter:blur(1px)){ #ll-dock{background:var(--ll-surface);} }
+/* a dock wider than the room it has scrolls sideways; it is never cut off */
+#ll-dock{max-width:calc(100vw - 16px);overflow-x:auto;scrollbar-width:none;transition:left .25s ease;}
+#ll-dock::-webkit-scrollbar{display:none;}
+/* beside an open rail in a window too narrow to hold both, the dock and its
+   chips centre on the page, not on the window, so they stay off the cards */
+@media screen and (min-width:781px) and (max-width:1200px){
+  body.ll-open #ll-dock,body.ll-open #ll-status{left:calc((100vw - var(--ll-rail-w)) / 2);}
+  body.ll-open #ll-dock{max-width:calc(100vw - var(--ll-rail-w) - 16px);}
+}
+#ll-dock button{display:inline-flex;align-items:center;gap:7px;border:none;background:transparent;
+  color:var(--ll-text-2);font-family:var(--ll-font);font-size:12.5px;font-weight:500;
+  padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;
+  transition:background .12s,color .12s;}
+#ll-dock button:hover{background:var(--ll-surface-2);color:var(--ll-text);}
+#ll-dock button.ll-on{background:var(--ll-accent);color:#fff;}
+#ll-dock button svg{width:15px;height:15px;flex:none;}
+.ll-dock-sep{width:1px;height:18px;background:var(--ll-border);margin:0 3px;flex:none;}
+
+/* one slot, two states: "Comments · n" opens the rail; "Hide" closes it */
+/* scoped under #ll-dock so they outrank the `#ll-dock button` display rule */
+#ll-dock #ll-collapse{display:none;}
+body.ll-open #ll-dock #ll-handle{display:none;}
+body.ll-open #ll-dock #ll-collapse{display:inline-flex;}
+
+/* the comment count: a badge on that button, shown whether the rail is open
+   or hidden. Green with a tick when every comment is resolved. */
+#ll-dock .ll-n{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;
+  min-width:19px;height:19px;padding:0 6px;border-radius:999px;background:var(--ll-accent);color:#fff;
+  font-size:10.5px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+#ll-dock .ll-n:empty{display:none;}
+#ll-dock .ll-n.ll-n-done{background:var(--ll-ok-soft);color:var(--ll-ok);}
+
+/* read-mode appears in the dock only when the adapter supports it */
+#ll-readmode{display:none;}
+#ll-readmode.ll-avail{display:inline-flex;}
+
+/* identity chip — always shows who you're commenting as; click to change */
+#ll-whoami .ll-av{width:17px;height:17px;font-size:8.5px;box-shadow:none;background:var(--ll-border-strong);}
+
+/* status chips — stacked above the dock, same center axis */
+#ll-status{position:fixed;bottom:66px;left:50%;transform:translateX(-50%);z-index:60;
+  display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;
+  font-family:var(--ll-font);}
+#ll-status > div{pointer-events:auto;}
+#ll-elsewhere{display:none;background:var(--ll-accent-soft);border:1px solid var(--ll-border);
+  color:var(--ll-accent-text);border-radius:999px;padding:6px 14px;font-size:11.5px;
+  font-weight:500;max-width:min(480px,90vw);box-shadow:var(--ll-shadow-sm);text-align:center;}
+#ll-elsewhere.ll-show{display:block;}
+#ll-orphan{display:none;background:var(--ll-warn-soft);border:1px solid var(--ll-warn-border);
+  color:var(--ll-warn-text);border-radius:999px;padding:6px 14px;font-size:11.5px;
+  font-weight:500;max-width:min(480px,90vw);box-shadow:var(--ll-shadow-sm);cursor:pointer;text-align:center;}
+#ll-orphan.ll-show{display:block;}
+#ll-orphan:focus-visible{outline:2px solid var(--ll-accent);outline-offset:2px;}
+
+/* orphaned-comment tray (P1.5) — opens above the chips from the orphan chip.
+   Its elements are created by the core, so there is no markup for it. */
+#ll-tray{display:none;width:min(440px,92vw);max-height:min(58vh,520px);overflow:auto;box-sizing:border-box;
+  background:var(--ll-surface);border:1px solid var(--ll-warn-border);border-radius:14px;
+  box-shadow:var(--ll-shadow-lg);padding:14px;font-size:13px;line-height:1.5;color:var(--ll-text);text-align:left;
+  scrollbar-width:thin;scrollbar-color:var(--ll-border-strong) transparent;}
+#ll-tray.ll-show{display:block;}
+.ll-tray-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;}
+.ll-tray-sub{font-size:11.5px;color:var(--ll-muted);font-weight:400;margin-top:2px;}
+.ll-orph{border-top:1px solid var(--ll-border);padding-top:12px;margin-top:12px;}
+.ll-orph .ll-snip{border-left-color:var(--ll-warn-border);}
+.ll-sugg-h{font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ll-muted);margin:10px 0 4px;}
+.ll-sugg-none{margin:8px 0 2px;}
+.ll-sugg{display:flex;align-items:center;gap:8px;padding:6px 8px;margin-bottom:4px;
+  background:var(--ll-surface-2);border-radius:8px;}
+.ll-sugg-t{flex:1;min-width:0;font-size:12px;color:var(--ll-text-2);cursor:pointer;}
+.ll-sugg-t:hover{color:var(--ll-text);}
+.ll-sugg-m{display:block;font-size:10.5px;color:var(--ll-muted);margin-top:1px;}
+.ll-sugg .ll-btn{flex:none;background:var(--ll-surface);border-color:var(--ll-border);}
+
+/* picking a block for an orphan: a chip says what to do; blocks highlight on hover */
+#ll-pick,#ll-note{display:none;background:var(--ll-surface);border:1px solid var(--ll-accent);
+  color:var(--ll-text);border-radius:999px;padding:6px 8px 6px 14px;font-size:11.5px;font-weight:500;
+  max-width:min(520px,92vw);box-shadow:var(--ll-shadow-md);text-align:center;}
+#ll-note{padding:6px 14px;border-color:var(--ll-border);color:var(--ll-text-2);}
+#ll-pick.ll-show,#ll-note.ll-show{display:block;}
+#ll-pick .ll-btn{margin-left:6px;}
+body.ll-reanchoring #ll-orphan{display:none;}
+body.ll-reanchoring [data-ll]{cursor:crosshair;}
+body.ll-reanchoring [data-ll]:hover{background:color-mix(in srgb, var(--ll-accent) 20%, transparent);box-shadow:0 0 0 2px var(--ll-accent);border-radius:3px;}
+
+/* the store's connection, when it is not saving: stays until it changes */
+#ll-conn{display:none;background:var(--ll-warn-soft);border:1px solid var(--ll-warn-border);
+  color:var(--ll-warn-text);border-radius:14px;padding:8px 14px;font-size:12px;font-weight:500;
+  max-width:min(520px,92vw);box-shadow:var(--ll-shadow-md);text-align:center;line-height:1.45;}
+#ll-conn.ll-show{display:block;}
+
+/* name card: an in-page form in place of the browser's prompt dialog. Its own
+   fixed element, above the composer, so it is never hidden behind one. */
+#ll-namecard{display:none;position:fixed;left:50%;bottom:118px;transform:translateX(-50%);z-index:80;
+  width:min(360px,92vw);box-sizing:border-box;background:var(--ll-surface);border:1px solid var(--ll-border);
+  border-radius:14px;box-shadow:var(--ll-shadow-lg);padding:16px;font-family:var(--ll-font);color:var(--ll-text);}
+#ll-namecard.ll-show{display:block;}
+.ll-nc-title{font-size:14px;font-weight:600;line-height:1.35;}
+.ll-nc-sub{font-size:12px;color:var(--ll-text-2);margin:4px 0 10px;line-height:1.5;}
+#ll-namecard input{width:100%;box-sizing:border-box;border:1px solid var(--ll-border);border-radius:9px;
+  padding:9px 10px;font-family:var(--ll-font);font-size:13px;background:var(--ll-surface-2);color:var(--ll-text);}
+#ll-namecard input:focus{outline:none;border-color:var(--ll-accent);box-shadow:0 0 0 3px var(--ll-accent-soft);background:var(--ll-surface);}
+#ll-namecard .ll-row{display:flex;justify-content:flex-end;gap:7px;margin-top:10px;}
+
+/* the Export menu: download, copy for an assistant, paste its replies */
+#ll-menu{display:none;position:fixed;z-index:75;min-width:220px;padding:6px;background:var(--ll-surface);
+  border:1px solid var(--ll-border);border-radius:12px;box-shadow:var(--ll-shadow-lg);font-family:var(--ll-font);}
+#ll-menu.ll-show{display:block;}
+#ll-menu button{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--ll-text);
+  font-family:var(--ll-font);font-size:13px;padding:8px 10px;border-radius:8px;cursor:pointer;}
+#ll-menu button:hover,#ll-menu button:focus-visible{background:var(--ll-surface-2);outline:none;}
+
+/* the paste card shares the name card's look; it holds a larger text box */
+#ll-pastecard{display:none;position:fixed;left:50%;bottom:118px;transform:translateX(-50%);z-index:80;
+  width:min(520px,92vw);box-sizing:border-box;background:var(--ll-surface);border:1px solid var(--ll-border);
+  border-radius:14px;box-shadow:var(--ll-shadow-lg);padding:16px;font-family:var(--ll-font);color:var(--ll-text);}
+#ll-pastecard.ll-show{display:block;}
+#ll-pastecard textarea{width:100%;height:min(34vh,240px);box-sizing:border-box;resize:vertical;border:1px solid var(--ll-border);
+  border-radius:9px;padding:9px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;
+  background:var(--ll-surface-2);color:var(--ll-text);}
+#ll-pastecard textarea:focus{outline:none;border-color:var(--ll-accent);box-shadow:0 0 0 3px var(--ll-accent-soft);}
+#ll-pastecard .ll-row{display:flex;justify-content:flex-end;gap:7px;margin-top:10px;}
+.ll-pc-err{font-size:12px;color:var(--ll-warn-text);margin-top:6px;min-height:0;}
+
+/* composer */
+#ll-composer{position:fixed;z-index:70;width:308px;background:var(--ll-surface);border:1px solid var(--ll-border);
+  border-radius:14px;box-shadow:var(--ll-shadow-lg);padding:14px;font-family:var(--ll-font);display:none;color:var(--ll-text);}
+#ll-composer .ll-ctx{font-size:11.5px;color:var(--ll-muted);margin-bottom:9px;line-height:1.45;
+  background:var(--ll-surface-2);border-left:2px solid var(--ll-accent);padding:5px 9px;border-radius:0 6px 6px 0;}
+#ll-composer .ll-ctx b{color:var(--ll-accent-text);}
+#ll-composer textarea{width:100%;min-height:68px;resize:vertical;border:1px solid var(--ll-border);border-radius:9px;
+  padding:9px 10px;font-family:var(--ll-font);font-size:13px;box-sizing:border-box;background:var(--ll-surface-2);color:var(--ll-text);
+  transition:border-color .12s,background .12s;}
+#ll-composer textarea:focus{background:var(--ll-surface);}
+#ll-composer textarea:focus{outline:none;border-color:var(--ll-accent);box-shadow:0 0 0 3px var(--ll-accent-soft);}
+#ll-composer .ll-row{display:flex;justify-content:flex-end;gap:7px;margin-top:9px;}
+
+@media print{ #ll-rail,#ll-dock,#ll-status,#ll-composer,#ll-namecard,#ll-menu,#ll-pastecard{display:none!important;} body.ll-open{margin-right:0!important;} .ll-anchored{background:none!important;box-shadow:none!important;} .ll-has{background-image:none!important;} }
+
+</style>
+</head>
+<body>
+
+<header class="wrap mast">
+  <img src="assets/brand/logo.svg" alt="LivingLink" width="174" height="38">
+  <div class="kind">Working document<br>13 November 2026</div>
+</header>
+
+<div class="wrap open">
+  <div class="tagline"><span class="src">Existing</span></div>
+  <h1>Comments that <span class="hl">live where you made them</span></h1>
+  <p class="lede">LivingLink is a margin-comment layer for interactive documents. A comment remembers the tab, the filter and the state it was made in, and surfaces only there.</p>
+  <div class="key">
+    <span><span class="src">Existing</span>&nbsp; from the project's own record, lightly edited</span>
+    <span><span class="src new">New draft</span>&nbsp; written 13 November 2026, waiting for the author</span>
+  </div>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap">
+    <button type="button" class="tab-btn active" onclick="switchTab('is')">What it is</button>
+    <button type="button" class="tab-btn" onclick="switchTab('why')">Why now</button>
+    <button type="button" class="tab-btn" onclick="switchTab('how')">How it works</button>
+    <button type="button" class="tab-btn" onclick="switchTab('stands')">Where it stands</button>
+    <button type="button" class="tab-btn" onclick="switchTab('others')">What else is out there</button>
+    <button type="button" class="tab-btn" onclick="switchTab('connects')">What it could connect to</button>
+    <button type="button" class="tab-btn" onclick="switchTab('next')">Where it could go</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ===================== WHAT IT IS ===================== -->
+<section class="tab-panel active" id="tab-is">
+  <div class="secthead"><span class="src">Existing</span></div>
+  <h2>Google Docs comments, for documents with state</h2>
+  <p class="lead">Most feedback tools treat a page as flat, with notes pinned to pixels and screenshots. Interactive documents have tabs, filters and views, and what a reader sees depends on which are in force. A comment made on the Metrics tab, filtered to North, is about that view, so that is where LivingLink shows it.</p>
+
+  <div class="specimen" aria-label="An example: one paragraph, one comment, one state">
+    <div class="page">
+      <div class="pills"><span>Summary</span><span class="cur">Metrics</span><span>Plan</span><span class="cur">North</span><span>South</span></div>
+      <h4>Throughput by band</h4>
+      <p>The forecast line is fixed and the units shift by region.</p>
+      <p><span class="on">In North, Band A is well under forecast.</span></p>
+    </div>
+    <div class="cmt">
+      <div class="q">&ldquo;In North, Band A is well under forecast.&rdquo;</div>
+      <div class="who"><i><span class="av">A</span>Amin</i><span class="st">Metrics &middot; North</span></div>
+      <div class="t">Worth a callout before Thursday.</div>
+    </div>
+    <div class="cap">The comment belongs to this sentence on this tab with this filter. Switch to South and the margin is empty. A chip says one comment is waiting elsewhere.</div>
+  </div>
+
+  <div class="three">
+    <div class="cardx">
+      <span class="n">State-aware</span>
+      <h3>Where plus what state</h3>
+      <p>A comment's identity is its anchor and its state: tab, region, any axis the document has. Switch views and the margin updates.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Anchored to content</span>
+      <h3>It survives the edit</h3>
+      <p>Anchors follow the words. Reorder, edit or regenerate the page and each comment finds its block again. One that cannot is flagged and waits for a person to place it.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Yours, end to end</span>
+      <h3>No vendor holds it</h3>
+      <p>Sync runs on Yjs, an open-source library, against a server you own. Comments are plain files on your disk.</p>
+    </div>
+  </div>
+
+  <h3>Where the idea came from</h3>
+  <p>Client work was going out as tabbed, filterable HTML because it organises dense material better than a linear document. Reviewers were still working in Google Docs, where threaded comments sit in the margin. Feedback came back by email, or was copied by hand into the page, where it froze.</p>
+  <p>LivingLink is the living version of those copied notes. The author called it a doorknob: the part that lets a document-minded reviewer into an interactive page without being told how.</p>
+
+  <h3>What it refuses</h3>
+  <ul>
+    <li><b>It does not build a backend.</b> Storage, sync and identity sit behind a small seam. The default keeps comments in your own browser.</li>
+    <li><b>It does not hand anchoring to a comment vendor.</b> A vendor whose anchors ignore state would bring back the problem this exists to solve.</li>
+    <li><b>It does not flatten the page into a document.</b> The interactive page stays interactive, and the comments adapt to it.</li>
+  </ul>
+</section>
+
+<!-- ===================== WHY NOW ===================== -->
+<section class="tab-panel" id="tab-why">
+  <div class="secthead"><span class="src new">New draft</span></div>
+  <h2>Information is moving out of documents</h2>
+  <p class="lead">More of what organisations need people to read is being published as pages: program guides, product specifications, policies, brand systems. A page can be found, linked to, measured and corrected in ways a PDF cannot.</p>
+  <p>One statement of that view is <a href="https://thinkpodagency.com/why-important-information-should-live-on-your-website-instead-of-pdfs/">ThinkPod's argument for moving important information out of PDFs</a>. It is an agency's post and gives no figures, so it is cited here as the view and no more.</p>
+
+  <h3>What the move leaves behind</h3>
+  <p>A PDF or a Google Doc comes with a way to review it: comments in the margin, markup, a sign-off. A web page has none of that. The people who used to mark up the document are left with screenshots and email.</p>
+  <p>Pages also have more shape than documents, and they change more often. A page has sections, tabs and filters, and it is corrected in place. Feedback tools made for static pages lose their place when either happens.</p>
+  <p>LivingLink was built for those two conditions. A comment knows which state of the page it belongs to, and it stays with its content when the page changes.</p>
+
+  <h3>Who would feel it first</h3>
+  <p>Teams with formal review are the likeliest to miss the document's margin: compliance, accreditation, clinical and policy content, brand approval.</p>
+  <div class="note"><p>This is a guess. Nobody in those teams has been asked yet.</p></div>
+</section>
+
+<!-- ===================== HOW IT WORKS ===================== -->
+<section class="tab-panel" id="tab-how">
+  <div class="secthead"><span class="src">Existing</span><span class="src new">New draft</span></div>
+  <h2>Three steps to a page people can comment on</h2>
+  <div class="three">
+    <div class="cardx">
+      <span class="n">One</span>
+      <h3>Process the page</h3>
+      <p>One build command adds LivingLink to an HTML page and writes a copy beside the original. A small adapter tells the layer how that site's sections and filters work.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Two</span>
+      <h3>Send the link</h3>
+      <p>Reviewers open the page, type a name and comment. There are no accounts and nothing to install. The link carries a key, and only people holding it can read or add comments.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Three</span>
+      <h3>Review in state</h3>
+      <p>Comments appear in the view they were made in. Read as doc puts every section in one scroll for a reviewer who prefers a linear read.</p>
+    </div>
+  </div>
+
+  <h3>What a reviewer sees</h3>
+  <ul>
+    <li>An invitation in the page, and one field for a name.</li>
+    <li>Comment cards in the right margin, level with what they are about.</li>
+    <li>A count of comments waiting on other sections, so nothing is missed.</li>
+    <li>A plain notice if the page cannot save what they write.</li>
+  </ul>
+
+  <h3>What the author gets</h3>
+  <ul>
+    <li>Comments that stay with their text when the page is edited or rebuilt.</li>
+    <li>A tray for the few that lose their place, with the nearest matches offered.</li>
+    <li>Every comment exported as Markdown, grouped by section, or copied in a form an assistant can act on.</li>
+    <li>The comments themselves, as files on a server the author runs.</li>
+  </ul>
+</section>
+
+<!-- ===================== WHERE IT STANDS ===================== -->
+<section class="tab-panel" id="tab-stands">
+  <div class="secthead"><span class="src">Existing</span></div>
+  <h2>A proof of concept, shown on real pages</h2>
+  <p class="lead">The first column was checked on 13 November 2026, in a browser or by the test suite. The second column has not been done.</p>
+  <div class="two">
+    <div class="cardx">
+      <span class="n">Working</span>
+      <ul>
+        <li>State-aware comments on four different pages: a five-tab explainer, a report with tabs and a region filter, a multi-screen tool, and a brand system site from another project.</li>
+        <li>Anchors that survive edits, and a tray for comments that cannot be placed.</li>
+        <li>Shared review through a keyed link, between two browser tabs on one computer.</li>
+        <li>Comments copied out for an assistant, and its replies pasted back into their threads.</li>
+        <li>Narrow windows. Comments shrink to a column of markers, or to one line that steps through them, and never sit on the page's text.</li>
+        <li>Ninety-three automated tests of the anchoring, the state rule, the local store and the assistant handoff.</li>
+      </ul>
+    </div>
+    <div class="cardx">
+      <span class="n">Not yet</span>
+      <ul>
+        <li>Run on an outside server, or with a second person.</li>
+        <li>Telling the author when a comment arrives.</li>
+        <li>A real phone. The narrow layouts were checked at phone width in a desktop browser.</li>
+        <li>Comments on images, apart from figures that carry a title.</li>
+        <li>Any site without an adapter written for it by hand.</li>
+      </ul>
+    </div>
+  </div>
+  <p>The first real document was a governance framework for community colleges, made with a collaborator who reviews in Google Docs.</p>
+</section>
+
+<!-- ===================== WHAT ELSE IS OUT THERE ===================== -->
+<section class="tab-panel" id="tab-others">
+  <div class="secthead"><span class="src new">New draft</span></div>
+  <h2>What else is out there</h2>
+  <div class="note"><p>Read from each tool's own pages and from search results on 13 November 2026. None of these tools was tried.</p></div>
+  <p class="lead">LivingLink is not the first to make a comment aware of the state of a page. What the reading did not turn up is another tool that does all of what it does together.</p>
+
+  <h3>Six kinds of neighbour</h3>
+  <table class="cmp">
+    <thead>
+      <tr><th>Kind</th><th>Examples</th><th>What their own pages say</th></tr>
+    </thead>
+    <tbody>
+      <tr><th>Comment toolkits built into an app</th><td>Velt, Liveblocks</td><td>A developer builds them in. Velt scopes comments to locations within a document and gives a dashboard's filters as an example.</td></tr>
+      <tr><th>Open web annotation</th><td>Hypothesis</td><td>Attaches a note to the words and re-attaches it after an edit. Nothing read about the state of a page.</td></tr>
+      <tr><th>Website feedback for agencies</th><td>BugHerd, Marker.io, Pastel, Markup.io</td><td>Notes pinned to an element or a point on a live site, with a screenshot.</td></tr>
+      <tr><th>Review inside a platform</th><td>Vercel, Netlify, Webflow</td><td>Comments on pages made or hosted there, for people with an account or a role there.</td></tr>
+      <tr><th>Review layers for pages made by AI tools</th><td>Margin, reviewjs, Commentable HTML, Plannotator</td><td>Comment on the page as you would a document, then hand the feedback to an assistant. Local, or one reviewer at a time, in what was read.</td></tr>
+      <tr><th>Business dashboards</th><td>Power BI, Strategy</td><td>A comment stores the filters in force and puts them back when it is opened.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>What the reading changed</h3>
+  <p>This project's record said that no other tool anchored comments to state, and that Velt could not. Both statements were too strong.</p>
+  <ul>
+    <li><b>Three of the tools read have comments that know a page's state.</b> Velt scopes them. Power BI and Strategy store the state and restore it.</li>
+    <li><b>Attaching a comment to the words is an established idea.</b> Its known weakness is landing on similar text somewhere else, the same fault LivingLink fixed for multi-screen pages on 13 November.</li>
+    <li><b>The nearest group is new.</b> Tools for reviewing a page an assistant made did not appear in the first survey in June.</li>
+  </ul>
+
+  <h3>What still looks distinctive</h3>
+  <p>No tool read offered all five of these together.</p>
+  <ul>
+    <li>It is added to an ordinary page with no work by the site's developer.</li>
+    <li>It follows several kinds of state at once, shows a comment only where it belongs, and counts the rest.</li>
+    <li>Its anchors follow the words through a rebuild, and comments that cannot be placed wait in a tray.</li>
+    <li>Review is shared by a link, with no accounts, on a server the author runs.</li>
+    <li>It reads like a document: a margin, and a linear mode for every section in one scroll.</li>
+  </ul>
+  <p>Each of the five exists somewhere. The claim is the combination, and it rests on one afternoon of reading pages.</p>
+
+  <h3>It does not have to be the only one</h3>
+  <p>LivingLink does not need to be the only tool of its kind, or to own this corner of the market. It needs to be useful to the people who review these pages. A couple of well-chosen connections would do more for that than being first.</p>
+
+  <h3>What to take from the neighbours</h3>
+  <ul>
+    <li><b>Go to the state.</b> In the dashboards, opening a comment takes you to the view it was made in. LivingLink shows where a comment is and cannot yet take you there.</li>
+    <li><b>Hand off to an assistant.</b> Every tool in the nearest group leads with this. LivingLink now has a first version: comments are copied out for an assistant, and its replies are pasted back into their threads.</li>
+    <li><b>Keep sharing.</b> The nearest group is local or passes files around. A shared room behind a link is where LivingLink differs from them.</li>
+    <li><b>Watch the platforms.</b> Whoever makes or hosts the pages can add comments for their own surface, and several have.</li>
+  </ul>
+
+  <h3>Read for this section</h3>
+  <ul>
+    <li><a href="https://velt.dev/docs/key-concepts/overview">Velt: key concepts, locations</a></li>
+    <li><a href="https://learn.microsoft.com/en-us/power-bi/explore-reports/end-user-comment">Power BI: add comments to dashboards and reports</a></li>
+    <li><a href="https://web.hypothes.is/blog/fuzzy-anchoring/">Hypothesis: fuzzy anchoring</a></li>
+    <li><a href="https://website-cks.pages.dev/margin/">Margin</a></li>
+    <li><a href="https://reviewjs.github.io/annotate/">reviewjs annotate.js</a></li>
+  </ul>
+  <p>The full list of thirteen pages read, and the tools that were only listed, is in the project's survey note.</p>
+</section>
+
+<!-- ===================== WHAT IT COULD CONNECT TO ===================== -->
+<section class="tab-panel" id="tab-connects">
+  <div class="secthead"><span class="src new">New draft</span></div>
+  <h2>What it could connect to</h2>
+  <div class="note"><p>The Google Docs and Notion parts were read from those companies' own documentation on 13 November 2026. Nothing in this section has been built or run.</p></div>
+  <p class="lead">LivingLink keeps two things for itself: where a comment is anchored, and the margin it appears in. Other platforms can supply what sits around those. The test for any connection is whether it carries a comment's state with it.</p>
+
+  <h3>Where it fits well</h3>
+  <div class="three">
+    <div class="cardx">
+      <span class="n">Hearing about it</span>
+      <h3>Slack, Teams or email</h3>
+      <p>A message when a comment lands, linking straight to it in its section. Today the author has to go and look.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Doing the work</span>
+      <h3>A task tracker</h3>
+      <p>A comment becomes a task in Linear, Jira, GitHub Issues or a Notion database, and links back to the paragraph and the view it was about.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Acting on it</span>
+      <h3>An AI assistant</h3>
+      <p>An assistant reads the comments on a page, revises the copy, replies and resolves. The comments stay with their text when the page is rebuilt.</p>
+    </div>
+  </div>
+  <p>Two more belong on this list. Signing in with Google or Microsoft would put real names where typed ones are now. Writing a finished round of review out as a document would give stakeholders who never open the page a record in the form they expect.</p>
+  <p>Of these, only Google Docs and Notion have been looked into. The rest are candidates.</p>
+
+  <h3>Google Docs and Notion, as documented</h3>
+  <table class="cmp">
+    <thead>
+      <tr><th></th><th>Google Docs</th><th>Notion</th></tr>
+    </thead>
+    <tbody>
+      <tr><th>Comment on an exact phrase</th><td>Yes</td><td>No. On a whole block, or on the page.</td></tr>
+      <tr><th>Reply and resolve</th><td>Yes</td><td>Reply, yes. Resolve only through its assistant tools.</td></tr>
+      <tr><th>Something like tabs</th><td>Yes</td><td>None seen in what was read</td></tr>
+      <tr><th>Hear about new comments</th><td>By checking for changes</td><td>Yes, it sends an event</td></tr>
+      <tr><th>A filter state, such as a region</th><td>No</td><td>No</td></tr>
+      <tr><th>Run LivingLink inside its published pages</th><td>No route found</td><td>No route found</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Open as a Google Doc</h3>
+  <p>LivingLink already has Read as doc for reviewers who prefer a linear read. Google's documentation points to a stronger form. The page could be written out as a real Google Doc, with one tab for each section and every comment on the sentence it was made about.</p>
+  <p>Comments made in that Doc could then be read back and placed on the page by the words they quote, because that is how LivingLink anchors already. The reviewer would stay in the tool they know and the page would still hold the record.</p>
+  <ul>
+    <li>Can a comment made this way carry the reviewer's name, or only the account that ran the export?</li>
+    <li>What does Google require of an app that asks for access to someone's documents?</li>
+    <li>Where does a filter state go, when a Doc has no place for one?</li>
+  </ul>
+
+  <h3>Notion</h3>
+  <p>Notion documents comments on whole blocks and sends an event when one is added. It cannot anchor a comment to a phrase. That makes it a fair place to track comments as tasks and a weaker place to mirror a review.</p>
+
+  <h3>Where it does not fit</h3>
+  <ul>
+    <li><b>Inside a published Notion page or Google Doc.</b> Neither documents a way for the owner to add a script, so the layer has nowhere to load.</li>
+    <li><b>Any mirror that drops the state.</b> A comment copied into another tool without its tab and filter is the problem LivingLink was built to solve.</li>
+  </ul>
+
+  <h3>Where the pages come from</h3>
+  <p>Two more connections sit on the other side, with the tools that make the pages. Site builders such as Webflow, Framer and WordPress are where the one-line install would go, if they let an owner add a script. That has not been checked. Page generators could ship the layer inside every page they make.</p>
+
+  <h3>The two or three that would matter</h3>
+  <p>A couple of connections, done well, would be enough to make LivingLink useful.</p>
+  <ul>
+    <li><b>The assistant.</b> It matches how these pages are made, and it depends on comments surviving a rebuild. A first version exists: a person carries the comments to the assistant and its replies back.</li>
+    <li><b>Notifications.</b> Small, and they close a gap in the invite that exists today.</li>
+    <li><b>A trial of the Google Doc.</b> One page, one reviewer, to answer the three questions above.</li>
+  </ul>
+
+  <h3>Read for this section</h3>
+  <ul>
+    <li><a href="https://developers.google.com/workspace/docs/api/how-tos/suggestions">Google Docs API: work with comments and suggestions</a></li>
+    <li><a href="https://developers.google.com/workspace/drive/api/guides/manage-comments">Google Drive API: manage comments and replies</a></li>
+    <li><a href="https://developers.notion.com/guides/data-apis/working-with-comments">Notion: working with comments</a></li>
+    <li><a href="https://developers.notion.com/reference/webhooks-events-delivery">Notion: webhook event types</a></li>
+  </ul>
+</section>
+
+<!-- ===================== WHERE IT COULD GO ===================== -->
+<section class="tab-panel" id="tab-next">
+  <div class="secthead"><span class="src new">New draft</span></div>
+  <h2>From one studio's pages to anyone's</h2>
+  <div class="note"><p>Nothing in this section is decided. The project's own record still calls LivingLink a proof of concept.</p></div>
+  <p class="lead">LivingLink began as a tool for pages made for client work. The same layer now runs on a site from another project with no change to that site. The next question is whether someone else could put it on theirs.</p>
+
+  <div class="three">
+    <div class="cardx">
+      <span class="n">Install</span>
+      <h3>One line, added by the site's owner</h3>
+      <p>Today someone who knows the code writes an adapter for each site. A site owner should be able to add one line and have common layouts recognised.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Review</span>
+      <h3>A round you can run</h3>
+      <p>Invite by link, see who has commented, hear when something arrives, close the round.</p>
+    </div>
+    <div class="cardx">
+      <span class="n">Record</span>
+      <h3>Feedback that outlives the round</h3>
+      <p>Comments kept with the state they were made in, so a decision can be traced to the paragraph and the view it was about.</p>
+    </div>
+  </div>
+
+  <h3>Questions still open</h3>
+  <ul>
+    <li>Will reviewers comment on a web page as readily as they do in a document?</li>
+    <li>How far can a typed name go before a review needs real sign-in?</li>
+    <li>What should happen to a round of comments when the page it was about is replaced?</li>
+    <li>Is this for people who build pages, or for the people who approve them?</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <img src="assets/brand/logo-mark.svg" alt="" width="25" height="30">
+    <span>LivingLink &middot; FutureObjects Research &middot; a working document</span>
+  </div>
+</footer>
+
+<script>
+  // Show one section. Global and named switchTab on purpose: the comment
+  // layer's tab adapter looks for exactly this.
+  function switchTab(name){
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+    var panel=document.getElementById('tab-'+name);
+    var btn=null;
+    document.querySelectorAll('.tab-btn').forEach(function(b){ if((b.getAttribute('onclick')||'').indexOf("'"+name+"'")>=0) btn=b; });
+    if(!panel){ panel=document.querySelector('.tab-panel'); btn=document.querySelector('.tab-btn'); }
+    panel.classList.add('active'); if(btn) btn.classList.add('active');
+    var bar=document.querySelector('.tabs');
+    if(bar && bar.getBoundingClientRect().top<=0) window.scrollTo(0, window.scrollY + bar.getBoundingClientRect().top);
+  }
+</script>
+<!-- ===== Living Link comment layer markup =====
+     Chrome is consolidated into ONE floating dock (bottom center) + a status
+     stack above it. No more four-corner buttons. IDs are load-bearing: the
+     core wires #ll-handle/#ll-collapse/#ll-modebtn/#ll-readmode and writes
+     into #ll-modetxt/#ll-readtxt/#ll-handletxt/#ll-elsewhere/#ll-orphan. -->
+<div id="ll-status">
+  <div id="ll-orphan"></div>
+  <div id="ll-elsewhere"></div>
+</div>
+<div id="ll-dock">
+  <button id="ll-modebtn" title="Comment on a block">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8a6 6 0 1 1-2.1-4.55"/><path d="M8 5.5v5M5.5 8h5"/></svg>
+    <span id="ll-modetxt">Comment</span>
+  </button>
+  <button id="ll-readmode" title="Read every tab as one document">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 2.5h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3"/></svg>
+    <span id="ll-readtxt">Read as doc</span>
+  </button>
+  <span class="ll-dock-sep"></span>
+  <button id="ll-handle" title="Show the comment rail">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7a4.5 4.5 0 0 1-4.5 4.5H6l-3 2.5v-3.4A4.49 4.49 0 0 1 1.5 7 4.5 4.5 0 0 1 6 2.5h3A4.5 4.5 0 0 1 13.5 7z"/></svg>
+    <span id="ll-handletxt">Comments</span>
+  </button>
+  <button id="ll-collapse" title="Hide the comment rail">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7a4.5 4.5 0 0 1-4.5 4.5H6l-3 2.5v-3.4A4.49 4.49 0 0 1 1.5 7 4.5 4.5 0 0 1 6 2.5h3A4.5 4.5 0 0 1 13.5 7z"/><path d="M5.5 7h4"/></svg>
+    <span>Hide</span>
+  </button>
+  <button id="ll-export" title="Download all comments as a Markdown file">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v7.5M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg>
+    <span>Export</span>
+  </button>
+  <span class="ll-dock-sep"></span>
+  <button id="ll-whoami" title="Set the name shown on your comments">
+    <span class="ll-av" id="ll-whoav">?</span>
+    <span id="ll-whotxt">Set name</span>
+  </button>
+</div>
+<div id="ll-rail"></div>
+<div id="ll-composer">
+  <div class="ll-ctx" id="ll-composerctx"></div>
+  <textarea id="ll-composertext" placeholder="Comment…  (Ctrl/⌘+Enter)"></textarea>
+  <div class="ll-row">
+    <button class="ll-btn" id="ll-cancel">Cancel</button>
+    <button class="ll-btn ll-pri" id="ll-save">Comment</button>
+  </div>
+</div>
+
+<script id="ll-anchoring">
+/* ===== Living Link — content-addressed anchoring (pure, no DOM) =====
+ *
+ * Replaces positional anchors (lla1, lla2 …) so a comment re-finds its block
+ * even after the artifact is regenerated and blocks move or change around it.
+ *
+ * A comment stores a durable TARGET descriptor:
+ *   { quote, hash, state, ordinal }
+ *     quote   — normalized text of the anchored block (the "text-quote")
+ *     hash    — FNV-1a of the quote (fast exact match)
+ *     state   — the state (tab) the comment was made in
+ *     ordinal — which occurrence, when several blocks share identical text
+ *
+ * resolve(target, blocks, opts) re-finds the block, in order of confidence:
+ *   1. exact   — a block whose hash matches (ordinal/state breaks ties)
+ *   2. fuzzy   — best trigram-Dice similarity above THRESHOLD, same state first
+ *   3. orphaned— nothing close enough; flagged, never silently mis-anchored
+ * opts.scan ('document' | 'active') says whether `blocks` is the whole
+ * document or only the active state; see resolve() and DR-0009.
+ *
+ * `blocks` is a plain array of { id, text, hash, state } — so this module is
+ * unit-testable in Node without a DOM. The core builds that array from the
+ * live document; the test builds it from string fixtures.
+ */
+(function(root){
+  var THRESHOLD = 0.6; // min trigram-Dice similarity to accept a fuzzy match
+
+  function normalize(s){
+    return (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
+  // FNV-1a 32-bit -> base36 string
+  function hashText(s){
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++){
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  }
+
+  function trigrams(s){
+    s = '  ' + s + '  ';
+    var t = [];
+    for (var i = 0; i < s.length - 2; i++) t.push(s.slice(i, i + 3));
+    return t;
+  }
+
+  // Sørensen–Dice coefficient over character trigrams (0..1)
+  function similarity(a, b){
+    if (a === b) return a ? 1 : 0;
+    if (!a || !b) return 0;
+    var A = trigrams(a), B = trigrams(b);
+    var counts = {}, inter = 0;
+    A.forEach(function(g){ counts[g] = (counts[g] || 0) + 1; });
+    B.forEach(function(g){ if (counts[g] > 0){ inter++; counts[g]--; } });
+    return (2 * inter) / (A.length + B.length);
+  }
+
+  function bestMatch(quote, list){
+    var bestId = null, bestScore = 0;
+    for (var i = 0; i < list.length; i++){
+      var s = similarity(list[i].text, quote);
+      if (s > bestScore){ bestScore = s; bestId = list[i].id; }
+    }
+    return { id: bestId, score: bestScore };
+  }
+
+  // opts.scan says what `blocks` covers (DR-0009), as declared by the adapter:
+  //   'document' (default) — every state's blocks are in the list, so a block
+  //       found in another state is a block that MOVED, and is followed.
+  //   'active' — only the active state's blocks are in the list (SPA hosts
+  //       that rebuild the page per view). The layer cannot tell a moved
+  //       block from a lookalike on another view, so a target is matched only
+  //       against its own state. If that state is not opts.active the comment
+  //       is off-screen: status 'unmounted', neither resolved nor orphaned.
+  //       Blocks with a null state belong to no state (chrome the adapter
+  //       declared ungoverned); they are in every scan and stay candidates.
+  function resolve(target, blocks, opts){
+    if (opts && opts.scan === 'active'){
+      if (target.state != null && target.state !== opts.active){
+        return { id: null, status: 'unmounted', score: 0 };
+      }
+      blocks = blocks.filter(function(b){ return b.state == null || b.state === target.state; });
+    }
+    // 1. exact by hash
+    var exact = blocks.filter(function(b){ return b.hash === target.hash; });
+    if (exact.length){
+      var pick;
+      if (exact.length === 1){
+        pick = exact[0];
+      } else {
+        // disambiguate identical-text blocks: same state, then ordinal
+        var sameState = exact.filter(function(b){ return b.state === target.state; });
+        var pool = sameState.length ? sameState : exact;
+        pick = pool[Math.min(target.ordinal || 0, pool.length - 1)] || pool[0];
+      }
+      return { id: pick.id, status: 'exact', score: 1 };
+    }
+    // 2. fuzzy — prefer same state, fall back to whole document
+    var same = blocks.filter(function(b){ return b.state === target.state; });
+    var r = bestMatch(target.quote, same.length ? same : blocks);
+    if (r.score < THRESHOLD && same.length){
+      var rAll = bestMatch(target.quote, blocks);
+      if (rAll.score > r.score) r = rAll;
+    }
+    if (r.id && r.score >= THRESHOLD){
+      return { id: r.id, status: 'fuzzy', score: r.score };
+    }
+    // 3. orphaned
+    return { id: null, status: 'orphaned', score: r.score };
+  }
+
+  // Ranked near-misses for a target that could not be resolved: the input to
+  // the orphaned-comment tray (P1.5). Never used to anchor automatically. The
+  // tray shows them and a person picks, so a score below THRESHOLD is fine
+  // here; SUGGEST_FLOOR only keeps unrelated blocks out of the list.
+  // Returns up to n of { id, score }, best first; equal scores prefer the
+  // target's own state.
+  var SUGGEST_FLOOR = 0.2;
+  function suggest(target, blocks, n){
+    var scored = [];
+    for (var i = 0; i < blocks.length; i++){
+      var s = similarity(blocks[i].text, target.quote);
+      if (s >= SUGGEST_FLOOR) scored.push({ id: blocks[i].id, score: s, same: blocks[i].state === target.state ? 1 : 0, i: i });
+    }
+    scored.sort(function(p, q){ return (q.score - p.score) || (q.same - p.same) || (p.i - q.i); });
+    return scored.slice(0, n || 3).map(function(c){ return { id: c.id, score: c.score }; });
+  }
+
+  var API = {
+    THRESHOLD: THRESHOLD,
+    SUGGEST_FLOOR: SUGGEST_FLOOR,
+    normalize: normalize,
+    hashText: hashText,
+    similarity: similarity,
+    resolve: resolve,
+    suggest: suggest
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  else root.LivingLinkAnchor = API;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script id="ll-state">
+/* ===== Living Link — multi-axis state visibility (pure, no DOM) =====
+ *
+ * Generalizes the single-tab rule into an arbitrary state tuple. A comment
+ * records the value of every axis it was made in (c.state = {tab, region, …});
+ * an adapter declares the axes and, each render, reports their *current* value
+ * and whether they currently apply.
+ *
+ * The rule (a direct generalization of the standalone demo's isVisibleHere):
+ *   a comment is visible iff, for every axis that currently APPLIES and that the
+ *   comment RECORDED a value for, the recorded value equals the active value.
+ *
+ *   - A null/absent recorded value means the comment's block isn't governed by
+ *     that axis (e.g. a non-region-aware block ignores the region filter) — that
+ *     axis never hides it.
+ *   - An axis that doesn't currently apply (e.g. the tab axis in linear "read as
+ *     a document" mode) is skipped entirely — which is exactly how linear mode
+ *     falls out for free (P1.2).
+ *
+ * Pure and data-driven so it's unit-testable without a DOM: the core computes
+ * axisStates from the live adapter, the test passes plain objects.
+ */
+(function(root){
+
+  // commentState: { axisKey: recordedValue|null }
+  // axisStates:   [ { key, active: currentValue, applies: bool } ]
+  function isVisible(commentState, axisStates){
+    for (var i = 0; i < axisStates.length; i++){
+      var a = axisStates[i];
+      if (!a.applies) continue;                       // axis off (e.g. tab in linear mode)
+      var rec = commentState ? commentState[a.key] : null;
+      if (rec == null) continue;                      // block not governed by this axis
+      if (rec !== a.active) return false;             // wrong state on an applicable axis
+    }
+    return true;
+  }
+
+  // Human label for a comment's state, e.g. "Metrics · North".
+  // axisDefs: [ { key, label(value)? } ] — only axes with a recorded value show.
+  function stateLabel(commentState, axisDefs){
+    var parts = [];
+    for (var i = 0; i < axisDefs.length; i++){
+      var d = axisDefs[i];
+      var v = commentState ? commentState[d.key] : null;
+      if (v == null) continue;
+      parts.push(d.label ? d.label(v) : v);
+    }
+    return parts.join(' · ');
+  }
+
+  // The primary (structural) axis value — used for anchoring locality and the
+  // "elsewhere" grouping. By convention axes[0] is the structural one.
+  function primaryValue(commentState, axisDefs){
+    if (!commentState || !axisDefs.length) return null;
+    return commentState[axisDefs[0].key];
+  }
+
+  // Manual re-anchoring (P1.5): a reviewer moves an orphaned comment onto a
+  // block. The structural axis follows the block, because a block lives in
+  // exactly one structural state. Every other recorded axis is kept:
+  // re-anchoring fixes WHERE the comment sits, not the state it was made in.
+  // Returns a new object; the input is not mutated.
+  function reanchorState(commentState, axisDefs, blockPrimary){
+    var out = {}, src = commentState || {};
+    for (var k in src){ if (Object.prototype.hasOwnProperty.call(src, k)) out[k] = src[k]; }
+    if (axisDefs.length) out[axisDefs[0].key] = blockPrimary;
+    return out;
+  }
+
+  var API = { isVisible: isVisible, stateLabel: stateLabel, primaryValue: primaryValue, reanchorState: reanchorState };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  else root.LivingLinkState = API;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script id="ll-handoff">
+/* ===== Living Link — handing comments to an assistant, and taking replies back (pure, no DOM) =====
+ *
+ * Two halves of one loop:
+ *
+ *   build(doc)                 -> text a reviewer copies and pastes to an AI
+ *                                 assistant: every open comment with the words it
+ *                                 is attached to, where it sits, the state it was
+ *                                 made in and its thread, plus plain instructions
+ *                                 and the exact form the assistant should answer in.
+ *
+ *   parseReplies(text, ids)    -> what the assistant sent back, pulled out of
+ *                                 whatever prose surrounds it, checked against the
+ *                                 comment ids that exist. The core then adds each
+ *                                 reply to its thread and resolves where asked.
+ *
+ * The assistant never touches the page or the comment store. A person carries
+ * the text both ways, so nothing here needs a server, a key or an account, and
+ * it works with any assistant that can read text.
+ *
+ * Pure and Node-requireable, like anchoring.js and state.js, so the wording of
+ * the export and the parsing of replies are unit-tested without a DOM.
+ */
+(function(root){
+  var KEY = 'livinglink_replies';
+  var MAX_QUOTE = 600;      // characters of the anchored text to include
+  var MAX_REPLY = 2000;     // characters of one reply accepted back
+
+  function one(s){ return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }
+  function clip(s, n){ s = one(s); return s.length > n ? s.slice(0, n) + '…' : s; }
+
+  // doc: { title, url, exportedAt,
+  //        comments: [ { id, quote, lowercased, where, stateLabel, state, resolved, orphaned,
+  //                      thread: [ { who, text } ] } ] }
+  // Resolved comments are left out: the assistant is being asked to act.
+  function build(doc){
+    doc = doc || {};
+    var all = doc.comments || [];
+    var open = all.filter(function(c){ return !c.resolved; });
+    var out = [];
+    out.push('# Review comments on: ' + (one(doc.title) || 'this page'));
+    if (doc.url) out.push('Page: ' + one(doc.url));
+    out.push('Exported: ' + (one(doc.exportedAt) || 'unknown') + ' · ' + open.length + ' open comment' + (open.length === 1 ? '' : 's') +
+             (all.length > open.length ? ' · ' + (all.length - open.length) + ' already resolved and not listed' : ''));
+    out.push('');
+    out.push('These comments were left on the page by reviewers, using LivingLink. Each one is attached to a piece of the page\'s text and to the state the page was in when it was made, such as a tab or a filter.');
+    out.push('');
+    out.push('What to do:');
+    out.push('1. For each comment, find the quoted text in the page\'s source and make the change the reviewer asks for, or decide not to.');
+    out.push('2. Leave text you were not asked about as it is. Comments stay attached to the page by their quoted words.');
+    out.push('3. Finish with one JSON block in exactly this form. It is pasted back onto the page, where each reply joins its thread:');
+    out.push('');
+    out.push('```json');
+    out.push('{"' + KEY + '": [');
+    out.push('  {"id": "<the comment\'s id>", "reply": "<what you did, in a sentence or two>", "resolve": true}');
+    out.push(']}');
+    out.push('```');
+    out.push('');
+    out.push('Set "resolve" to false for a comment you did not act on, and say why in the reply. Include every id once.');
+    out.push('');
+    if (!open.length){
+      out.push('There are no open comments.');
+      return out.join('\n');
+    }
+    open.forEach(function(c, i){
+      var label = one(c.stateLabel) || 'Whole page';
+      out.push('## ' + (i + 1) + '. ' + label + ' (id: ' + one(c.id) + ')');
+      out.push('> ' + (clip(c.quote, MAX_QUOTE) || '(no text recorded)'));
+      if (c.lowercased) out.push('The quote above is the stored form, in lower case; the page has it in its own case.');
+      if (c.where) out.push('Under the heading: ' + clip(c.where, 120));
+      if (c.state && typeof c.state === 'object'){
+        var keys = Object.keys(c.state).filter(function(k){ return c.state[k] != null; });
+        if (keys.length) out.push('State: ' + keys.map(function(k){ return k + ' = ' + one(c.state[k]); }).join(', '));
+      }
+      if (c.orphaned) out.push('Note: the text this comment was attached to is no longer on the page.');
+      (c.thread || []).forEach(function(m){ out.push('- ' + (one(m.who) || 'Someone') + ': ' + one(m.text)); });
+      out.push('');
+    });
+    return out.join('\n').replace(/\n+$/, '\n');
+  }
+
+  // Find the JSON an assistant sent back. It may be alone, inside a ```json
+  // fence, or surrounded by prose. Returns the parsed object or null.
+  function findJson(text){
+    text = String(text == null ? '' : text);
+    var tries = [];
+    var fence = /```(?:json)?\s*([\s\S]*?)```/g, m;
+    while ((m = fence.exec(text))) tries.push(m[1]);
+    var a = text.indexOf('{'), b = text.lastIndexOf('}');
+    if (a >= 0 && b > a) tries.push(text.slice(a, b + 1));
+    tries.push(text);
+    for (var i = 0; i < tries.length; i++){
+      try {
+        var v = JSON.parse(tries[i]);
+        if (v && typeof v === 'object' && Array.isArray(v[KEY])) return v;
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  // knownIds: the ids of the comments on the page. Replies for ids that are
+  // not there are reported, never applied. The result is data only; it is the
+  // core that decides to write anything.
+  // -> { replies: [ { id, text, resolve } ], unknown: [ id ], skipped: n, error: string|null }
+  function parseReplies(text, knownIds){
+    var found = findJson(text);
+    if (!found) return { replies: [], unknown: [], skipped: 0, error: 'No replies were found. The text needs a JSON block with "' + KEY + '".' };
+    var known = {}; (knownIds || []).forEach(function(id){ known[String(id)] = 1; });
+    var seen = {}, replies = [], unknown = [], skipped = 0;
+    found[KEY].forEach(function(r){
+      if (!r || typeof r !== 'object'){ skipped++; return; }
+      var id = one(r.id), body = one(r.reply);
+      if (!id || !body){ skipped++; return; }
+      if (seen[id]){ skipped++; return; }           // one reply per comment
+      seen[id] = 1;
+      if (!known[id]){ unknown.push(id); return; }
+      replies.push({ id: id, text: body.length > MAX_REPLY ? body.slice(0, MAX_REPLY) + '…' : body, resolve: r.resolve === true });
+    });
+    return { replies: replies, unknown: unknown, skipped: skipped, error: null };
+  }
+
+  var API = { KEY: KEY, build: build, parseReplies: parseReplies };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  else root.LivingLinkHandoff = API;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script id="ll-core">
+/* ===== Living Link comment layer — core =====
+ *
+ * Host-agnostic. Knows nothing about tabs, .tab-panel, or switchTab.
+ * It talks to the host document only through an adapter passed to
+ * LivingLink.init(adapter). See src/adapters/tabpanel.js (single axis) and
+ * src/adapters/tabpanel-region.js (two axes) for reference adapters.
+ *
+ * The adapter declares an arbitrary STATE TUPLE as a list of axes (P1.1).
+ * Each axis is:
+ *   { key,                       // e.g. 'tab', 'region'
+ *     active(),                  // the axis's current value
+ *     of(el),                    // value a block structurally belongs to (or null)
+ *     record(el),               // value to stamp on a comment made on this block
+ *     label(value),              // human label
+ *     applies() }                // is this axis currently governing visibility?
+ *                                //   (linear "read as doc" mode = tab.applies()->false, P1.2)
+ * Plus: adapter.axes (array, axes[0] is the structural one), adapter.selector,
+ * adapter.controlSelector, adapter.onStateChange(cb), adapter.getSeeds(),
+ * adapter.textOf(el) (optional: the text a block is anchored by, for blocks
+ * such as figures whose identity is a title or alt text), and
+ * adapter.scan: 'document' when every state's blocks are in the DOM at once
+ * (tab hosts), 'active' when only the active state's are (SPA hosts). The
+ * structural axis may report null for a block that belongs to no state; a
+ * comment on it shows in every state (DR-0009).
+ *
+ * A comment carries c.state = { axisKey: recordedValue }. The single rule that
+ * everything hangs off is visible() — now delegated to the pure, multi-axis
+ * LivingLinkState.isVisible (src/state.js).
+ */
+window.LivingLink = (function(){
+  var ADAPTER=null, STORE=null, NS='artifact';
+  var LLA=(typeof window!=='undefined'?window.LivingLinkAnchor:null); // anchoring module
+  var LLS=(typeof window!=='undefined'?window.LivingLinkState:null);  // visibility module
+  var LLH=(typeof window!=='undefined'?window.LivingLinkHandoff:null); // assistant handoff (optional: absent in older linked builds)
+  var ME=null, PEER="Amin";                       // ME resolved from the store on init
+  var COLOR={"You":"#c0392b","Amin":"#2c6e9c"};   // seed authors keep fixed colors
+  // tray: orphaned-comment tray open; reanchor: id of the comment being re-attached by picking a block
+  var state={open:false, commenting:false, selected:null, cursor:null, linear:false, tray:false, reanchor:null};
+  var anchors={}, blockIndex=[], comments=[], uid=0;
+  var $=function(s,r){return (r||document).querySelector(s);};
+  var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+  function nid(){return "ll"+Date.now().toString(36)+"-"+(++uid);}  // collision-safe across sessions
+  // Everything a reviewer typed (names as well as comment text) goes through
+  // esc() before it reaches innerHTML: in a shared room it came from someone
+  // else. Tolerates a missing value so one malformed record cannot break render.
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(m){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[m];});}
+  // deterministic avatar color for any name (fixed for seed authors)
+  function colorFor(w){ w=String(w==null?'':w); if(Object.prototype.hasOwnProperty.call(COLOR,w)) return COLOR[w]; var h=0; for(var i=0;i<w.length;i++){h=(h*31+w.charCodeAt(i))>>>0;} return 'hsl('+(h%360)+',45%,42%)'; }
+  function av(w){return '<span class="ll-av" style="background:'+colorFor(w)+'">'+esc(String(w||'?').slice(0,1).toUpperCase())+'</span>';}
+
+  // ---- identity: a lightweight, locally-remembered name (P1.4 v1) ----
+  // The dock always shows who you're commenting as (#ll-whoami) so a
+  // remembered identity is never silent — click it to change.
+  function updateWhoami(){
+    var btn=$('#ll-whoami'); if(!btn) return;
+    var avEl=$('#ll-whoav'), txt=$('#ll-whotxt');
+    if(ME){
+      avEl.style.background=colorFor(ME);
+      avEl.textContent=ME.slice(0,1).toUpperCase();
+      txt.textContent=ME;
+      btn.title='Commenting as '+ME+'. Click to change.';
+    } else {
+      avEl.style.background='';
+      avEl.textContent='?';
+      txt.textContent='Set name';
+      btn.title='Set the name shown on your comments';
+    }
+  }
+  function setUser(name){ ME=name; if(STORE && STORE.setUser) STORE.setUser(name); updateWhoami(); }
+
+  // The name card: an in-page form in place of the browser's prompt dialog.
+  // mode 'invite' greets a first-time reviewer on a shared page; 'name' sets
+  // or changes the name. `then` runs once a name is saved, and not at all if
+  // the card is dismissed, so nothing is ever posted under a made-up name.
+  var nameThen=null;
+  function nameCard(){
+    var card=$('#ll-namecard');
+    if(!card){
+      card=document.createElement('div'); card.id='ll-namecard';
+      card.setAttribute('role','dialog'); card.setAttribute('aria-labelledby','ll-nc-title');
+      card.innerHTML=
+        '<div class="ll-nc-title" id="ll-nc-title"></div>'+
+        '<div class="ll-nc-sub" id="ll-nc-sub"></div>'+
+        '<input type="text" id="ll-nc-name" maxlength="40" autocomplete="name" placeholder="Your name">'+
+        '<div class="ll-row"><button class="ll-btn" id="ll-nc-skip">Not now</button>'+
+        '<button class="ll-btn ll-pri" id="ll-nc-ok"></button></div>';
+      document.body.appendChild(card);
+      var submit=function(){
+        var v=$('#ll-nc-name').value.trim(); if(!v){ $('#ll-nc-name').focus(); return; }
+        var then=nameThen; closeNameCard(); setUser(v); if(then) then();
+      };
+      $('#ll-nc-ok').addEventListener('click', submit);
+      $('#ll-nc-skip').addEventListener('click', closeNameCard);
+      $('#ll-nc-name').addEventListener('keydown', function(ev){
+        if(ev.key==='Enter'){ ev.preventDefault(); submit(); }
+        if(ev.key==='Escape'){ ev.stopPropagation(); closeNameCard(); }
+      });
+    }
+    return card;
+  }
+  function openNameCard(mode, then){
+    var card=nameCard(); nameThen=then||null;
+    var invite=(mode==='invite');
+    $('#ll-nc-title').textContent=invite ? "You're invited to comment on this page" : 'Your name';
+    $('#ll-nc-sub').textContent=invite
+      ? 'Add your name, then click anything on the page you want to comment on. Everyone with this link sees the comments.'
+      : 'Shown on your comments.';
+    $('#ll-nc-ok').textContent=invite ? 'Start commenting' : 'Save';
+    $('#ll-nc-name').value=ME||'';
+    card.classList.add('ll-show');
+    $('#ll-nc-name').focus();
+  }
+  function closeNameCard(){ var c=$('#ll-namecard'); if(c) c.classList.remove('ll-show'); nameThen=null; }
+  // run `then` as a named reviewer, asking for the name first if there is none
+  function needName(then){ if(ME) then(); else openNameCard('name', then); }
+  function changeUser(){ openNameCard('name'); }
+
+  // ---- persistence: serialize the durable parts only (runtime anchor/el are
+  // re-resolved on load via content-addressed targets) ----
+  function serialize(){
+    return comments.map(function(c){
+      return {id:c.id, target:c.target, state:c.state, resolved:!!c.resolved, thread:c.thread};
+    });
+  }
+  function persist(){ if(STORE && STORE.save) STORE.save(NS, serialize()); }
+
+  // ---- host state, via the adapter's axes ----
+  function axes(){ return ADAPTER.axes; }
+  function primaryAxis(){ return ADAPTER.axes[0]; }            // the structural axis (e.g. tab)
+  function primaryOf(el){ return primaryAxis().of(el); }       // which structural state a block lives in
+  // current value + applicability of every axis, for the pure visibility rule
+  function axisStates(){ return axes().map(function(a){ return {key:a.key, active:a.active(), applies:a.applies?a.applies():true}; }); }
+  // axis defs (key + label fn) for building human state labels
+  function axisDefs(){ return axes().map(function(a){ return {key:a.key, label:a.label}; }); }
+  // stamp the active state tuple onto a comment made on `block`
+  function captureState(block){
+    var s={}; axes().forEach(function(a){ s[a.key]= a.record ? a.record(block) : a.of(block); }); return s;
+  }
+  function stateLabelOf(c){ return LLS.stateLabel(c.state, axisDefs()); }
+  // The state badge on a card. A comment that recorded no state at all (made
+  // on a block that belongs to no state, DR-0009) is document-wide and gets no
+  // badge, only "done" once resolved.
+  function badgeHtml(label, resolved){
+    var t=label ? label+(resolved?' · done':'') : (resolved?'done':'');
+    return t ? '<span class="ll-badge">'+esc(t)+'</span>' : '';
+  }
+  function primaryValue(c){ return LLS.primaryValue(c.state, axisDefs()); }
+  function primaryLabel(v){ return primaryAxis().label ? primaryAxis().label(v) : v; }
+
+  // ---- content-addressed anchoring ----
+  // Each block's id is derived from a hash of its normalized text (with an
+  // ordinal suffix when several blocks share identical text), not its DOM
+  // position. We also build a flat blockIndex the anchoring module resolves
+  // comment targets against, so a comment re-finds its block after the
+  // artifact is regenerated. See src/anchoring.js.
+  // The text a block is anchored by. Normally what it reads as. An adapter
+  // may supply textOf(el) for blocks whose identity is not their visible text:
+  // a figure or an embedded frame is named by its title or alt text, which
+  // stays put while what is drawn inside it changes. Returning null or
+  // undefined falls back to the block's own text.
+  function blockText(el){
+    var t=ADAPTER.textOf ? ADAPTER.textOf(el) : null;
+    return (t==null) ? (el.innerText||'') : String(t);
+  }
+  function initAnchors(){
+    anchors={}; blockIndex=[];
+    var seen={};
+    $$(ADAPTER.selector).forEach(function(el){
+      if(el.parentElement && el.parentElement.closest('[data-ll]')) return; // skip nested
+      var text=LLA.normalize(blockText(el));
+      var hash=LLA.hashText(text);
+      var ord=(seen[hash]==null)?0:(seen[hash]+1); seen[hash]=ord;
+      var id='a'+hash+(ord?('-'+ord):'');
+      el.setAttribute('data-ll',id);
+      var stateKey=primaryOf(el);                 // anchoring locality uses the structural axis
+      anchors[id]={el:el, state:stateKey};
+      blockIndex.push({id:id, text:text, hash:hash, state:stateKey, ordinal:ord});
+    });
+  }
+
+  // durable descriptor stored on a comment so it survives regeneration.
+  // `state` here is the structural (primary) axis value, for anchoring locality.
+  function makeTarget(id){
+    for(var i=0;i<blockIndex.length;i++){
+      if(blockIndex[i].id===id){ var b=blockIndex[i];
+        return {quote:b.text, hash:b.hash, state:b.state, ordinal:b.ordinal}; }
+    }
+    var a=anchors[id]; var text=a?LLA.normalize(blockText(a.el)):'';
+    return {quote:text, hash:LLA.hashText(text), state:a?a.state:null, ordinal:0};
+  }
+
+  // What a scan of the DOM covers, as DECLARED by the adapter (DR-0009):
+  // 'document' = every state's blocks are present (tab hosts); 'active' = only
+  // the active state's blocks are (SPA hosts that rebuild the page per view).
+  // The core does not infer this.
+  function scanMode(){ return ADAPTER.scan==='active' ? 'active' : 'document'; }
+
+  // re-resolve a comment's target to a live block; flag if orphaned.
+  // Non-structural axes (e.g. region) were captured at creation and are never
+  // touched here. The structural axis is handled per DR-0009:
+  //  - 'document' scan: the layer can see the whole document, so a block found
+  //    in another state has MOVED and the comment follows it.
+  //  - 'active' scan: the layer sees one state at a time and cannot tell a
+  //    moved block from a lookalike, so it never moves a comment. The
+  //    structural state is the one the target was made in. Records written
+  //    before DR-0009 can carry a different value (the old code rewrote it per
+  //    view and it got saved); this puts it back.
+  function resolveComment(c){
+    if(!c.target) return;
+    var key=primaryAxis().key, mode=scanMode();
+    if(!c.state) c.state={};
+    if(mode==='active' && c.target.state!==undefined && c.state[key]!==c.target.state) c.state[key]=c.target.state;
+    var r=LLA.resolve(c.target, blockIndex, {scan:mode, active:primaryAxis().active()});
+    if(r.id){
+      c.anchor=r.id; c.orphaned=false; c.match=r.status;
+      // follow a moved block; a block that belongs to no state (null) leaves
+      // the comment's recorded structural value alone
+      if(mode==='document' && anchors[r.id].state!=null) c.state[key]=anchors[r.id].state;
+    } else {
+      c.anchor=null;
+      // 'unmounted' = off-screen in an active-only scan: it counts in the
+      // "elsewhere" chip and resolves when its state is shown. Anything else
+      // the block is gone: orphaned, and it goes to the tray. In a
+      // whole-document scan that includes a comment whose home state no
+      // longer exists.
+      c.orphaned=(r.status!=='unmounted');
+      c.match=r.status;
+    }
+  }
+  function snippet(id){ var a=anchors[id]; if(!a) return id;
+    var t=blockText(a.el).replace(/\s+/g,' ').trim();
+    return t.length>56 ? t.slice(0,56)+'…' : (t||id); }
+
+  // ---- the one rule everything hangs off — now multi-axis (P1.1) ----
+  function visible(c){ return LLS.isVisible(c.state, axisStates()); }
+
+  // ---- seed demo comments supplied by the adapter ----
+  function seedFromAdapter(){
+    if(!ADAPTER.getSeeds) return;
+    ADAPTER.getSeeds().forEach(function(s){
+      if(!s.anchor) return;
+      // s.state is the captured state tuple, e.g. {tab:'overview'} or {tab,region}
+      var st = (s.state && typeof s.state==='object') ? s.state : captureState(anchors[s.anchor].el);
+      var c={id:nid(), anchor:s.anchor, state:st, resolved:false, thread:[{who:s.who, text:s.text}]};
+      c.target=makeTarget(s.anchor);   // durable reference for regeneration
+      comments.push(c);
+    });
+  }
+
+  // ---- how the rail is drawn ----
+  // The stylesheet decides, by the window's width, and says so in --ll-mode:
+  //   full  : every card, beside its block (wide windows)
+  //   strip : a marker per comment beside its block, one card open at a time
+  //           (narrow desktop windows)
+  //   line  : one line along the bottom that steps through the comments, one
+  //           card open at a time (phones)
+  // The core only reads the mode; the breakpoints live in the stylesheet.
+  function railMode(rail){
+    var m=''; try{ m=getComputedStyle(rail||$('#ll-rail')).getPropertyValue('--ll-mode').trim(); }catch(e){}
+    return (m==='strip'||m==='line') ? m : 'full';
+  }
+  var lastMode='full';
+  // the visible comments, in the order of the blocks they belong to
+  function docOrder(list){
+    return list.map(function(c){ return {c:c, y:anchors[c.anchor].el.getBoundingClientRect().top}; })
+      .sort(function(p,q){ return p.y-q.y; }).map(function(p){ return p.c; });
+  }
+  function clip(s,n){ s=String(s==null?'':s).replace(/\s+/g,' ').trim(); return s.length>n ? s.slice(0,n)+'…' : s; }
+
+  // one comment as a card, or (mini) as a marker that opens it
+  function buildCard(c, mini, closable){
+    var head=c.thread[0], n=c.thread.length, expanded=(c.id===state.selected && !mini);
+    var card=document.createElement('div');
+    card.className='ll-card'+(c.resolved?' ll-resolved':'')+(expanded?' ll-sel':'')+(mini?' ll-mini':'');
+    card.setAttribute('data-anchor', c.anchor); card.setAttribute('data-id', c.id);
+    if(mini){
+      card.setAttribute('role','button'); card.setAttribute('tabindex','0');
+      card.setAttribute('aria-label','Comment by '+head.who+'. Open it.');
+      card.title=head.who+': '+clip(head.text,140)+(n>1?' · '+(n-1)+' repl'+(n>2?'ies':'y'):'')+(c.resolved?' · done':'');
+      card.innerHTML=av(head.who)+(n>1?'<span class="ll-mini-n">'+n+'</span>':'');
+      card.addEventListener('click', function(ev){ ev.stopPropagation(); select(c.id); });
+      card.addEventListener('keydown', function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); select(c.id); } });
+      return card;
+    }
+    var replies=c.thread.slice(1).map(function(r){
+      return '<div class="ll-reply"><div class="ll-who">'+av(r.who)+esc(r.who)+'</div>'+esc(r.text)+'</div>'; }).join('');
+    card.innerHTML=
+      '<div class="ll-snip">“'+esc(snippet(c.anchor))+'”</div>'+
+      '<div class="ll-top"><div class="ll-who">'+av(head.who)+esc(head.who)+'</div>'+
+        badgeHtml(stateLabelOf(c), c.resolved)+'</div>'+
+      '<div class="ll-text">'+esc(head.text)+'</div>'+
+      (expanded?replies:(n>1?'<div class="ll-snip">'+(n-1)+' more repl'+(n>2?'ies':'y')+'…</div>':''))+
+      (expanded?(
+        '<div class="ll-actions">'+
+          '<button class="ll-btn" data-act="reply">Reply</button>'+
+          '<button class="ll-btn" data-act="resolve">'+(c.resolved?'Reopen':'Resolve')+'</button>'+
+          // delete is author-only: cosmetic gating (identity is a self-chosen
+          // name, not auth) but it keeps the UI honest in a trusted review
+          (ME&&head.who===ME?'<button class="ll-btn ll-danger" data-act="delete">Delete</button>':'')+
+          (closable?'<button class="ll-btn" data-act="close">Close</button>':'')+
+        '</div>'+
+        '<div class="ll-replybox"><input type="text" placeholder="Reply… (Enter)"></div>'):'');
+    card.addEventListener('click', function(ev){
+      if(ev.target.closest('[data-act]')||ev.target.tagName==='INPUT') return;
+      select(c.id);
+    });
+    if(expanded){
+      var del=card.querySelector('[data-act="delete"]');
+      if(del) del.addEventListener('click',function(ev){
+        ev.stopPropagation();
+        var ok=true; try{ ok=window.confirm('Delete this comment'+(n>1?' and its '+(n-1)+' repl'+(n>2?'ies':'y'):'')+' for everyone?'); }catch(e){}
+        if(!ok) return;
+        comments=comments.filter(function(x){ return x.id!==c.id; });
+        if(state.selected===c.id) state.selected=null;
+        persist(); render();   // persist prunes the record server-side, so the delete syncs
+      });
+      card.querySelector('[data-act="resolve"]').addEventListener('click',function(ev){
+        ev.stopPropagation(); c.resolved=!c.resolved; if(c.resolved&&state.selected===c.id)state.selected=null; persist(); render(); });
+      var x=card.querySelector('[data-act="close"]');
+      if(x) x.addEventListener('click',function(ev){ ev.stopPropagation(); closeCard(); });
+      var rb=card.querySelector('[data-act="reply"]'), box=card.querySelector('.ll-replybox'), inp=box.querySelector('input');
+      rb.addEventListener('click',function(ev){ ev.stopPropagation(); box.classList.toggle('ll-show'); inp.focus(); });
+      inp.addEventListener('keydown',function(ev){ if(ev.key==='Enter'&&inp.value.trim()){
+        var text=inp.value.trim();
+        needName(function(){ c.thread.push({who:ME,text:text}); persist(); render(); });
+      }});
+    }
+    return card;
+  }
+
+  // line mode: "‹ 2 of 5 ›" and either a one-line look at that comment (tap to
+  // open it) or, while its card is open, a Close button
+  function navBar(ord, i, open){
+    var cur=ord[i], head=cur.thread[0], many=ord.length>1, nav=document.createElement('div');
+    nav.className='ll-nav';
+    nav.innerHTML=
+      '<button class="ll-nav-b" data-nav="-1" aria-label="Previous comment"'+(many?'':' disabled')+'>‹</button>'+
+      '<span class="ll-nav-n">'+(i+1)+' of '+ord.length+'</span>'+
+      '<button class="ll-nav-b" data-nav="1" aria-label="Next comment"'+(many?'':' disabled')+'>›</button>'+
+      (open ? '<span class="ll-nav-sp"></span><button class="ll-btn" data-act="close">Close</button>'
+            : '<button class="ll-nav-peek" aria-label="Open this comment">'+av(head.who)+
+              '<span><b>'+esc(head.who)+'</b> '+esc(clip(head.text,160))+'</span></button>');
+    $$('[data-nav]', nav).forEach(function(b){ b.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      var t=ord[(i+Number(b.getAttribute('data-nav'))+ord.length)%ord.length];
+      if(open) select(t.id); else { state.cursor=t.id; render(); showBlock(t); }
+    }); });
+    var peek=nav.querySelector('.ll-nav-peek');
+    if(peek) peek.addEventListener('click', function(ev){ ev.stopPropagation(); select(cur.id); });
+    var x=nav.querySelector('[data-act="close"]');
+    if(x) x.addEventListener('click', function(ev){ ev.stopPropagation(); closeCard(); });
+    return nav;
+  }
+
+  // ---- render the margin rail ----
+  function render(){
+    var rail=$('#ll-rail'), keepScroll=rail.scrollTop, mode=railMode(rail); rail.innerHTML='';
+    lastMode=mode;
+    $$('.ll-anchored').forEach(function(e){e.classList.remove('ll-anchored');});
+    $$('.ll-has').forEach(function(e){e.classList.remove('ll-has');});
+
+    var vis=comments.filter(visible).filter(function(c){ return anchors[c.anchor]; });
+    var selC=null; vis.forEach(function(c){ if(c.id===state.selected) selC=c; });
+    if(selC) anchors[selC.anchor].el.classList.add('ll-anchored');
+    // the page's own text says where the open comments are: a faint tint on
+    // each block that has one in this view. Only while the rail is showing,
+    // so hiding the rail still gives back a clean page.
+    if(state.open) vis.forEach(function(c){ if(!c.resolved) anchors[c.anchor].el.classList.add('ll-has'); });
+    // strip mode gives the page back its width until a card is open
+    document.body.classList.toggle('ll-has-sel', !!selC);
+
+    if(mode==='line'){
+      if(vis.length){
+        var ord=docOrder(vis), cur=selC;
+        if(!cur) ord.forEach(function(c){ if(c.id===state.cursor) cur=c; });
+        if(!cur) cur=ord[0];
+        state.cursor=cur.id;
+        // the line is about one comment: show which block that is
+        if(state.open) anchors[cur.anchor].el.classList.add('ll-anchored');
+        rail.appendChild(navBar(ord, ord.indexOf(cur), !!selC));
+        if(selC) rail.appendChild(buildCard(selC, false, false));
+      }
+    } else {
+      vis.forEach(function(c){ rail.appendChild(buildCard(c, mode==='strip' && c!==selC, mode==='strip')); });
+    }
+    layout();
+    if(keepScroll && mode==='line') rail.scrollTop=keepScroll;   // the bottom panel scrolls; a re-render keeps its place
+    elsewhere();
+    orphans();
+    handleCount();
+  }
+
+  // ---- vertical alignment with collision avoidance (the Docs trick) ----
+  // The rail is viewport-fixed, so cards align to each anchor's *viewport*
+  // position (no scrollY) and re-layout on scroll — comments track their
+  // blocks as you scroll, exactly like Docs, and live in their own gutter.
+  // Markers (strip mode) are placed the same way; they are only smaller.
+  //
+  // In line mode the rail is a panel along the bottom and nothing in it is
+  // positioned; its height is published for the stylesheet to make room.
+  var sheetH=null;
+  function setSheetH(v){ if(v!==sheetH){ sheetH=v; document.body.style.setProperty('--ll-sheet-h', v); } }
+  function layout(){
+    var rail=$('#ll-rail'); if(!state.open) return;
+    if(railMode(rail)==='line'){ setSheetH(rail.offsetHeight+'px'); return; }
+    setSheetH('0px');
+    var cards=$$('.ll-card', rail).map(function(c){
+      var a=anchors[c.getAttribute('data-anchor')];
+      var y=a? a.el.getBoundingClientRect().top : 0;
+      return {c:c, y:y, mini:c.classList.contains('ll-mini')};
+    });
+    cards.sort(function(p,q){return p.y-q.y;});
+    var prevB=8;
+    cards.forEach(function(it){
+      var top=Math.max(it.y, prevB+(it.mini?6:10));
+      it.c.style.top=top+'px';
+      prevB=top+it.c.offsetHeight;
+    });
+  }
+  // a resize can cross from one mode to another, which needs a fresh render
+  function onResize(){ if(railMode()!==lastMode) render(); else layout(); }
+
+  // bring a comment's block into view and flash it
+  function showBlock(c){
+    var a=c&&anchors[c.anchor]; if(!a) return;
+    var rail=$('#ll-rail');
+    if(railMode(rail)==='line'){
+      // the panel covers the bottom of the window: put the block just above
+      // it, or its first lines at the top if it is taller than the room left
+      var r=a.el.getBoundingClientRect(), room=rail.getBoundingClientRect().top-12;
+      window.scrollBy({top:(r.height>room ? r.top-8 : r.bottom-room), behavior:'smooth'});
+    } else a.el.scrollIntoView({behavior:'smooth',block:'center'});
+    a.el.classList.remove('ll-flash'); void a.el.offsetWidth; a.el.classList.add('ll-flash');
+  }
+  function select(id){ state.selected=id; if(!state.open) setOpen(true); render();
+    var rail=$('#ll-rail'); if(railMode(rail)==='line') rail.scrollTop=0;
+    showBlock(byId(id));
+  }
+  // strip and line modes: put the open card away. The page gets its width
+  // back, which moves the text, so keep the block the reader was on in view.
+  function closeCard(){
+    var c=byId(state.selected), a=c&&anchors[c.anchor];
+    if(!state.selected) return;
+    state.selected=null; render();
+    if(a && a.el.scrollIntoView) a.el.scrollIntoView({block:'nearest'});
+  }
+
+  function elsewhere(){
+    var box=$('#ll-elsewhere');
+    var groups={};
+    // group hidden, unresolved comments by their structural (primary) state value.
+    // Orphans are left out: their block is gone, so they are not "on" any
+    // state. The orphan chip and tray account for them instead.
+    comments.forEach(function(c){ if(!visible(c)&&!c.resolved&&!c.orphaned){ var k=primaryValue(c); if(k!=null) groups[k]=(groups[k]||0)+1; }});
+    var keys=Object.keys(groups); if(!keys.length){ box.classList.remove('ll-show'); return; }
+    var total=keys.reduce(function(s,t){return s+groups[t];},0);
+    var noun=(primaryAxis().elsewhereNoun)||'other states';
+    box.innerHTML='<b>'+total+'</b> comment'+(total>1?'s':'')+' on '+noun+': '+
+      keys.map(function(t){return groups[t]+' on “'+esc(primaryLabel(t))+'”';}).join(', ')+'.';
+    box.classList.add('ll-show');
+  }
+  // orphaned comments: block could not be re-found after regeneration.
+  // Flagged here, never silently mis-anchored (P0.2).
+  // The chip counts them and opens the tray (P1.5), where a person re-attaches
+  // each one by hand.
+  function lostComments(){ return comments.filter(function(c){return c.orphaned&&!c.resolved;}); }
+  function orphans(){
+    var box=$('#ll-orphan');
+    var lost=lostComments();
+    if(!lost.length){ box.classList.remove('ll-show'); box.title=''; state.tray=false; }
+    else {
+      box.innerHTML='⚠ <b>'+lost.length+'</b> comment'+(lost.length>1?'s':'')+
+        ' lost '+(lost.length>1?'their':'its')+' block after an edit. '+(state.tray?'Hide':'Review')+'.';
+      box.title=state.tray?'Hide the orphaned comments':'Show the orphaned comments and re-attach them';
+      box.setAttribute('aria-expanded', state.tray?'true':'false');
+      box.classList.add('ll-show');
+    }
+    renderTray(lost);
+  }
+
+  // ---- orphaned-comment tray (P1.5) ----
+  // Lists every comment whose block could not be re-found, with the nearest
+  // blocks in the current document, and lets a person re-attach it: either to
+  // one of those suggestions or to any block they click on the page. Nothing
+  // here anchors on its own. The tray's elements are created by the core, not
+  // by comment-layer.html, so hosts that carry their own copy of the markup
+  // (linked builds) get it without a markup change.
+  function trayEls(){
+    var st=$('#ll-status'); if(!st) return null;
+    var tray=$('#ll-tray');
+    if(!tray){
+      var note=document.createElement('div'); note.id='ll-note'; note.setAttribute('role','status');
+      var pick=document.createElement('div'); pick.id='ll-pick';
+      tray=document.createElement('div'); tray.id='ll-tray'; tray.setAttribute('role','region'); tray.setAttribute('aria-label','Orphaned comments');
+      st.insertBefore(note, st.firstChild); st.insertBefore(pick, note); st.insertBefore(tray, pick);
+    }
+    return {tray:tray, pick:$('#ll-pick'), note:$('#ll-note')};
+  }
+  function byId(id){ for(var i=0;i<comments.length;i++){ if(comments[i].id===id) return comments[i]; } return null; }
+  function shortQuote(c){ var q=(c.target&&c.target.quote)||''; return q.length>72 ? q.slice(0,72)+'…' : (q||'(no text recorded)'); }
+  var noteTimer=null;
+  function note(text){
+    var els=trayEls(); if(!els) return;
+    els.note.textContent=text; els.note.classList.add('ll-show');
+    clearTimeout(noteTimer); noteTimer=setTimeout(function(){ els.note.classList.remove('ll-show'); }, 6000);
+  }
+
+  function renderTray(lost){
+    var els=trayEls(); if(!els) return;
+    // a pick in progress ends if its comment is gone or no longer orphaned
+    if(state.reanchor){ var rc=byId(state.reanchor); if(!rc||!rc.orphaned||rc.resolved) setReanchor(null); }
+
+    if(state.reanchor){
+      els.pick.innerHTML='Click the block this comment belongs to: <b>“'+esc(shortQuote(byId(state.reanchor)))+'”</b> '+
+        '<button class="ll-btn" data-act="cancel-pick">Cancel</button>';
+      els.pick.querySelector('[data-act="cancel-pick"]').addEventListener('click',function(){ setReanchor(null); state.tray=true; render(); });
+      els.pick.classList.add('ll-show');
+    } else { els.pick.classList.remove('ll-show'); els.pick.innerHTML=''; }
+
+    if(!state.tray || state.reanchor || !lost.length){ els.tray.classList.remove('ll-show'); els.tray.innerHTML=''; return; }
+
+    var keepScroll=els.tray.scrollTop;
+    els.tray.innerHTML='';
+    var head=document.createElement('div'); head.className='ll-tray-head';
+    head.innerHTML='<div><b>'+lost.length+' orphaned comment'+(lost.length>1?'s':'')+'</b>'+
+      '<div class="ll-tray-sub">The text each was attached to is no longer in the document. Attach it to a block, or resolve it.</div></div>'+
+      '<button class="ll-btn" data-act="close-tray">Close</button>';
+    head.querySelector('[data-act="close-tray"]').addEventListener('click',function(){ state.tray=false; render(); });
+    els.tray.appendChild(head);
+
+    lost.forEach(function(c){
+      var first=c.thread[0]||{who:'?',text:''};
+      var sugg=LLA.suggest(c.target, blockIndex, 3);
+      var item=document.createElement('div'); item.className='ll-orph'; item.setAttribute('data-id', c.id);
+      item.innerHTML=
+        '<div class="ll-snip">“'+esc(shortQuote(c))+'”</div>'+
+        '<div class="ll-top"><div class="ll-who">'+av(first.who)+esc(first.who)+'</div>'+
+          badgeHtml(stateLabelOf(c), false)+'</div>'+
+        '<div class="ll-text">'+esc(first.text)+'</div>'+
+        (c.thread.length>1?'<div class="ll-tray-sub">'+(c.thread.length-1)+' repl'+(c.thread.length>2?'ies':'y')+'</div>':'')+
+        (sugg.length?'<div class="ll-sugg-h">Closest blocks now</div>'
+                    :'<div class="ll-tray-sub ll-sugg-none">Nothing in the document now is close to this text.</div>')+
+        sugg.map(function(s){
+          var a=anchors[s.id]; var where=(a&&a.state!=null)?primaryLabel(a.state):'';
+          return '<div class="ll-sugg" data-block="'+esc(s.id)+'">'+
+            '<div class="ll-sugg-t" title="Show this block">“'+esc(snippet(s.id))+'”'+
+              '<span class="ll-sugg-m">'+esc(where)+(where?' · ':'')+Math.round(s.score*100)+'% alike</span></div>'+
+            '<button class="ll-btn" data-act="attach">Attach</button></div>';
+        }).join('')+
+        '<div class="ll-actions">'+
+          '<button class="ll-btn ll-pri" data-act="pick">Pick a block on the page</button>'+
+          '<button class="ll-btn" data-act="resolve">Resolve</button>'+
+          (ME&&first.who===ME?'<button class="ll-btn ll-danger" data-act="delete">Delete</button>':'')+
+        '</div>';
+      $$('.ll-sugg', item).forEach(function(row){
+        var bid=row.getAttribute('data-block');
+        row.querySelector('.ll-sugg-t').addEventListener('click',function(){ flashBlock(bid); });
+        row.querySelector('[data-act="attach"]').addEventListener('click',function(){ attach(c, bid); });
+      });
+      item.querySelector('[data-act="pick"]').addEventListener('click',function(){ closeComposer(); setReanchor(c.id); render(); });
+      item.querySelector('[data-act="resolve"]').addEventListener('click',function(){ c.resolved=true; persist(); render(); });
+      var del=item.querySelector('[data-act="delete"]');
+      if(del) del.addEventListener('click',function(){
+        var ok=true; try{ ok=window.confirm('Delete this comment'+(c.thread.length>1?' and its '+(c.thread.length-1)+' repl'+(c.thread.length>2?'ies':'y'):'')+' for everyone?'); }catch(e){}
+        if(!ok) return;
+        comments=comments.filter(function(x){ return x.id!==c.id; });
+        persist(); render();
+      });
+      els.tray.appendChild(item);
+    });
+    els.tray.classList.add('ll-show');
+    els.tray.scrollTop=keepScroll;
+  }
+
+  // What the store says about its connection, shown as a chip that stays
+  // until it changes. A shared store that is not connected keeps comments
+  // only in this tab's memory, and a reviewer has to be told that before they
+  // write anything. kind: 'ok' | 'denied' | 'offline' | null.
+  var connKind=null, wantInvite=false;
+  function connection(kind){
+    connKind=kind;
+    // the invite greeting waits for a working connection: greeting someone
+    // into a room they cannot write to would be a false welcome
+    if(kind==='ok') greetIfInvited();
+    else if(kind==='denied'||kind==='offline'){ var nc=$('#ll-namecard'); if(nc&&nc.classList.contains('ll-show')&&$('#ll-nc-ok').textContent==='Start commenting'){ closeNameCard(); wantInvite=true; } }
+    var els=trayEls(); if(!els) return;
+    var chip=$('#ll-conn');
+    if(!chip){ chip=document.createElement('div'); chip.id='ll-conn'; chip.setAttribute('role','status'); els.note.parentNode.insertBefore(chip, els.note); }
+    var text=
+      kind==='denied'  ? 'This link is missing its invite key, or the key is wrong. Comments you add here are not saved or shared.' :
+      kind==='offline' ? 'Not connected to the comment server. Comments you add now are not saved unless it reconnects.' : '';
+    chip.textContent=text;
+    chip.classList.toggle('ll-show', !!text);
+    document.body.classList.toggle('ll-unsaved', !!text);
+  }
+
+  function greetIfInvited(){
+    if(!wantInvite || ME) return;
+    if(connKind==='denied' || connKind==='offline') return;
+    wantInvite=false;
+    openNameCard('invite', function(){ setCommenting(true); });
+  }
+
+  function setReanchor(id){ state.reanchor=id; document.body.classList.toggle('ll-reanchoring', !!id); }
+  // scroll to a block and flash it, if it is on screen in the current state
+  function flashBlock(id){
+    var a=anchors[id]; if(!a||!a.el.offsetParent) return false;
+    a.el.scrollIntoView({behavior:'smooth',block:'center'}); a.el.classList.remove('ll-flash'); void a.el.offsetWidth; a.el.classList.add('ll-flash');
+    return true;
+  }
+  // a block the reviewer can act on right now: the structural axis is off
+  // (linear mode shows everything) or the block is in the active state
+  // A block with a null structural value belongs to no state (the adapter
+  // declared it ungoverned, DR-0009): it is live wherever it is on the page.
+  function blockLive(block){ var pa=primaryAxis(), s=primaryOf(block); return (pa.applies&&!pa.applies()) || s==null || s===pa.active(); }
+
+  // Re-attach an orphaned comment to a block a person chose. The target is
+  // rebuilt from the new block; the state keeps every recorded axis except the
+  // structural one, which follows the block (LivingLinkState.reanchorState).
+  function attach(c, id){
+    if(!c||!anchors[id]) return;
+    c.target=makeTarget(id); c.anchor=id;
+    c.state=LLS.reanchorState(c.state, axisDefs(), anchors[id].state);
+    c.orphaned=false; c.match='manual';
+    setReanchor(null);
+    persist();
+    if(visible(c)){ select(c.id); }
+    else { state.selected=null; render(); note('Re-attached. It shows on “'+stateLabelOf(c)+'”.'); }
+  }
+  function handleCount(){
+    var n=comments.filter(function(c){return !c.resolved;}).length;
+    var done=comments.length-n;
+    // The count is a badge on the button in both of its states ("Comments"
+    // while the rail is hidden, "Hide" while it shows), so a reader can always
+    // see that there are comments. Open comments are counted; when every
+    // comment is resolved the badge says so, in place of showing nothing.
+    var text=n ? String(n) : (done ? '✓ '+done : '');
+    var tip=!comments.length ? '' :
+      (n ? n+' open comment'+(n===1?'':'s') : 'No open comments')+(done ? ', '+done+' resolved' : '');
+    $('#ll-handletxt').textContent='Comments';
+    ['#ll-handle','#ll-collapse'].forEach(function(sel){
+      var b=$(sel); if(!b) return;
+      var badge=b.querySelector('.ll-n');
+      if(!badge){ badge=document.createElement('span'); badge.className='ll-n'; b.appendChild(badge); }
+      badge.textContent=text;
+      badge.classList.toggle('ll-n-done', !n && !!done);
+      if(tip) badge.setAttribute('aria-label', tip); else badge.removeAttribute('aria-label');
+      badge.title=tip;
+    });
+  }
+
+  // ---- composer ----
+  var pending=null;
+  function openComposer(el,ev){
+    pending=el.getAttribute('data-ll');
+    var label=stateLabelOf({state:captureState(el)});
+    $('#ll-composerctx').innerHTML='on: <b>'+esc(snippet(pending))+'</b>'+(label?'<br>state: <b>'+esc(label)+'</b>':'');
+    var c=$('#ll-composer'); c.style.display='block';
+    var w=290,h=170,pad=12;
+    c.style.left=Math.max(pad,Math.min(ev.clientX, window.innerWidth-w-pad))+'px';
+    c.style.top=Math.max(pad,Math.min(ev.clientY, window.innerHeight-h-pad))+'px';
+    var t=$('#ll-composertext'); t.value=''; t.focus();
+  }
+  function closeComposer(){ $('#ll-composer').style.display='none'; pending=null; }
+  function wireComposer(){
+    $('#ll-save').addEventListener('click',function(){
+      var txt=$('#ll-composertext').value.trim(); if(!txt||!pending){closeComposer();return;}
+      needName(function(){
+        if(!pending||!anchors[pending]) return;
+        var c={id:nid(), anchor:pending, state:captureState(anchors[pending].el), resolved:false, thread:[{who:ME,text:txt}]};
+        c.target=makeTarget(pending);   // durable reference for regeneration
+        comments.push(c); persist(); closeComposer(); if(!state.open) setOpen(true); state.selected=c.id; render();
+      });
+    });
+    $('#ll-cancel').addEventListener('click',closeComposer);
+    $('#ll-composertext').addEventListener('keydown',function(ev){
+      if(ev.key==='Enter'&&(ev.metaKey||ev.ctrlKey)) $('#ll-save').click();
+      if(ev.key==='Escape') closeComposer(); });
+
+    // CAPTURE phase: in commenting mode, a click on a commentable block wins
+    // over whatever the host would do with it (e.g. a block of text inside a
+    // navigation button/card). We intercept before the host's handler fires:
+    // composer opens, navigation suppressed. Clicks on the control's
+    // non-commentable parts still pass through, so you can keep navigating.
+    document.addEventListener('click',function(ev){
+      if(!ev.target.closest) return;
+      // Re-attaching an orphan (P1.5) takes the click first: a live block
+      // becomes the comment's new anchor. Anything else passes through, so the
+      // reviewer can switch tabs or filters while the pick stays armed.
+      if(state.reanchor){
+        if(ev.target.closest('#ll-composer,#ll-rail,#ll-dock,#ll-status,#ll-namecard,#ll-menu,#ll-pastecard')) return;
+        var target=ev.target.closest('[data-ll]');
+        if(target && blockLive(target)){
+          ev.preventDefault(); ev.stopPropagation();
+          attach(byId(state.reanchor), target.getAttribute('data-ll'));
+        }
+        return;
+      }
+      if(!state.commenting) return;
+      if(ev.target.closest('#ll-composer,#ll-rail,#ll-dock,#ll-status,#ll-namecard,#ll-menu,#ll-pastecard')) return;
+      var block=ev.target.closest('[data-ll]');
+      if(!block) return;
+      if(blockLive(block)){
+        ev.preventDefault(); ev.stopPropagation();
+        openComposer(block,ev);
+      }
+    },true);
+
+    // bubble phase: clicks that weren't on a block — close any open composer,
+    // unless they're on layer chrome or host controls (tab switches etc.)
+    document.addEventListener('click',function(ev){
+      if(!state.commenting || state.reanchor) return;
+      if(ev.target.closest('#ll-composer')||ev.target.closest('#ll-rail')||
+         (ADAPTER.controlSelector&&ev.target.closest(ADAPTER.controlSelector))||
+         ev.target.closest('#ll-dock')||ev.target.closest('#ll-status')||ev.target.closest('#ll-namecard')||
+         ev.target.closest('#ll-menu')||ev.target.closest('#ll-pastecard')) return;
+      var block=ev.target.closest('[data-ll]');
+      // commentable if the block is currently visible (see blockLive)
+      if(block && blockLive(block)) openComposer(block,ev); else closeComposer();
+    });
+  }
+
+  // ---- export: every comment as a Markdown digest, grouped by screen/tab ----
+  // Quotes come from the durable target (not the live DOM), so off-screen and
+  // orphaned comments export fine too.
+  function exportMarkdown(){
+    var lines=['# Comments on '+(document.title||'Artifact'),'',
+      '_Exported '+new Date().toLocaleString()+' · '+comments.length+' comment'+(comments.length===1?'':'s')+'_',''];
+    if(!comments.length) lines.push('No comments yet.');
+    var groups={}, order=[];
+    comments.forEach(function(c){
+      var k=primaryValue(c); k=(k==null?'':String(k));
+      if(!(k in groups)){ groups[k]=[]; order.push(k); }
+      groups[k].push(c);
+    });
+    order.forEach(function(k){
+      lines.push('## '+(k===''?'General':primaryLabel(k)),'');
+      groups[k].forEach(function(c){
+        var q=(c.target&&c.target.quote)||''; if(q.length>240) q=q.slice(0,240)+'…';
+        var badge=stateLabelOf(c);
+        var flags=(c.resolved?' · resolved':'')+(c.orphaned?' · ⚠ block no longer found':'');
+        lines.push('- > '+(q||'(no quote)'));
+        if(badge||flags) lines.push('  - _'+badge+flags+'_');
+        c.thread.forEach(function(m){ lines.push('  - **'+m.who+':** '+m.text); });
+        lines.push('');
+      });
+    });
+    var blob=new Blob([lines.join('\n')],{type:'text/markdown'});
+    var a=document.createElement('a');
+    var base=(location.pathname.split('/').pop()||'artifact').replace(/\.html?$/i,'');
+    a.href=URL.createObjectURL(blob);
+    a.download=base+'-comments.md';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },0);
+  }
+
+  // ---- handing comments to an assistant, and taking its replies back ----
+  // A person carries the text both ways: "Copy for an assistant" puts every
+  // open comment on the clipboard in a form an assistant can act on
+  // (src/handoff.js), and "Paste an assistant's replies" reads its answer,
+  // adds each reply to its thread as "Assistant" and resolves where it said
+  // it had dealt with the comment. Nothing is sent anywhere by the layer.
+  var ASSISTANT='Assistant';
+
+  // the nearest heading above a block, so the export can say where it sits
+  function headingAbove(el){
+    var hs=$$('h1,h2,h3,h4'), best=null;
+    for(var i=0;i<hs.length;i++){
+      if(hs[i]===el || hs[i].closest('#ll-rail,#ll-status,#ll-dock,#ll-composer,#ll-namecard,#ll-menu,#ll-pastecard')) continue;
+      if(hs[i].compareDocumentPosition(el) & 4) best=hs[i];   // 4 = el comes after this heading
+    }
+    return best ? (best.innerText||best.textContent||'').replace(/\s+/g,' ').trim() : null;
+  }
+  function handoffDoc(){
+    return {
+      title: document.title||'',
+      // the page's address without its query string, which may carry an invite key
+      url: ((location.origin && location.origin!=='null') ? location.origin : '') + location.pathname,
+      exportedAt: new Date().toISOString().slice(0,16).replace('T',' ')+' UTC',
+      comments: comments.map(function(c){
+        var a=anchors[c.anchor];
+        return { id:c.id, quote: a ? blockText(a.el) : ((c.target&&c.target.quote)||''), lowercased: !a,
+                 where: a ? headingAbove(a.el) : null, stateLabel: stateLabelOf(c), state: c.state,
+                 resolved: !!c.resolved, orphaned: !!c.orphaned, thread: c.thread };
+      })
+    };
+  }
+  function copyForAssistant(){
+    var text=LLH.build(handoffDoc());
+    var n=comments.filter(function(c){ return !c.resolved; }).length;
+    var said='Copied '+n+' open comment'+(n===1?'':'s')+' for an assistant. Paste them into its chat.';
+    var fallback=function(){ openPasteCard('copy', text); };
+    try {
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function(){ note(said); }, fallback);
+      else fallback();
+    } catch(e){ fallback(); }
+  }
+  function applyReplies(text){
+    var res=LLH.parseReplies(text, comments.map(function(c){ return c.id; }));
+    if(res.error) return res.error;
+    var resolved=0;
+    res.replies.forEach(function(r){
+      var c=byId(r.id); if(!c) return;
+      c.thread.push({who:ASSISTANT, text:r.text});
+      if(r.resolve && !c.resolved){ c.resolved=true; resolved++; }
+    });
+    if(res.replies.length){ if(state.selected && (byId(state.selected)||{}).resolved) state.selected=null; persist(); render(); }
+    var n=res.replies.length;
+    note((n ? 'Added '+n+' repl'+(n===1?'y':'ies')+(resolved?' and resolved '+resolved:'')+'.' : 'No replies matched a comment on this page.')+
+         (res.unknown.length ? ' '+res.unknown.length+' '+(res.unknown.length===1?'was':'were')+' for a comment that is not here.' : ''));
+    return null;
+  }
+
+  // the paste card: a text box for the assistant's answer, or, when the
+  // clipboard is not available, the export itself to copy by hand
+  function pasteCard(){
+    var card=$('#ll-pastecard');
+    if(!card){
+      card=document.createElement('div'); card.id='ll-pastecard';
+      card.setAttribute('role','dialog'); card.setAttribute('aria-labelledby','ll-pc-title');
+      card.innerHTML=
+        '<div class="ll-nc-title" id="ll-pc-title"></div>'+
+        '<div class="ll-nc-sub" id="ll-pc-sub"></div>'+
+        '<textarea id="ll-pc-text" spellcheck="false"></textarea>'+
+        '<div class="ll-pc-err" id="ll-pc-err" role="alert"></div>'+
+        '<div class="ll-row"><button class="ll-btn" id="ll-pc-cancel">Close</button>'+
+        '<button class="ll-btn ll-pri" id="ll-pc-ok"></button></div>';
+      document.body.appendChild(card);
+      $('#ll-pc-cancel').addEventListener('click', closePasteCard);
+      $('#ll-pc-ok').addEventListener('click', function(){
+        if(card.getAttribute('data-mode')==='copy'){ var t=$('#ll-pc-text'); t.focus(); t.select(); try{ document.execCommand('copy'); note('Copied.'); }catch(e){} return; }
+        var err=applyReplies($('#ll-pc-text').value);
+        if(err){ $('#ll-pc-err').textContent=err; } else closePasteCard();
+      });
+      $('#ll-pc-text').addEventListener('keydown', function(ev){ if(ev.key==='Escape'){ ev.stopPropagation(); closePasteCard(); } });
+    }
+    return card;
+  }
+  function openPasteCard(mode, text){
+    var card=pasteCard(); card.setAttribute('data-mode', mode);
+    var copy=(mode==='copy');
+    $('#ll-pc-title').textContent=copy ? 'Copy these comments for an assistant' : "Paste an assistant's replies";
+    $('#ll-pc-sub').textContent=copy
+      ? 'This browser would not copy for you. Select the text below, copy it, and paste it into the assistant.'
+      : 'Paste the whole answer. Each reply joins its comment as "'+ASSISTANT+'", and comments it says it dealt with are resolved.';
+    $('#ll-pc-ok').textContent=copy ? 'Copy' : 'Add replies';
+    $('#ll-pc-err').textContent='';
+    var t=$('#ll-pc-text'); t.value=copy ? text : ''; t.readOnly=copy;
+    card.classList.add('ll-show'); t.focus(); if(copy) t.select();
+  }
+  function closePasteCard(){ var c=$('#ll-pastecard'); if(c) c.classList.remove('ll-show'); }
+
+  // the Export button opens a small menu when the handoff module is present
+  function exportMenu(){
+    var m=$('#ll-menu');
+    if(!m){
+      m=document.createElement('div'); m.id='ll-menu'; m.setAttribute('role','menu');
+      m.innerHTML=
+        '<button role="menuitem" data-act="md">Download as Markdown</button>'+
+        '<button role="menuitem" data-act="copy">Copy for an assistant</button>'+
+        '<button role="menuitem" data-act="paste">Paste an assistant\'s replies</button>';
+      document.body.appendChild(m);
+      m.addEventListener('click', function(ev){
+        var b=ev.target.closest('[data-act]'); if(!b) return;
+        closeExportMenu();
+        var act=b.getAttribute('data-act');
+        if(act==='md') exportMarkdown(); else if(act==='copy') copyForAssistant(); else openPasteCard('paste');
+      });
+    }
+    return m;
+  }
+  function toggleExportMenu(){
+    var m=exportMenu(), ex=$('#ll-export');
+    if(m.classList.contains('ll-show')){ closeExportMenu(); return; }
+    var r=ex.getBoundingClientRect();
+    m.style.left=Math.max(8, Math.min(r.left, window.innerWidth-240))+'px';
+    m.style.bottom=(window.innerHeight-r.top+8)+'px';
+    m.classList.add('ll-show'); ex.setAttribute('aria-expanded','true');
+  }
+  function closeExportMenu(){ var m=$('#ll-menu'); if(m) m.classList.remove('ll-show'); var ex=$('#ll-export'); if(ex) ex.setAttribute('aria-expanded','false'); }
+
+  // ---- toggles ----
+  function setOpen(v){ state.open=v; document.body.classList.toggle('ll-open',v); render(); }
+  function setCommenting(v){ state.commenting=v; document.body.classList.toggle('ll-commenting',v);
+    $('#ll-modebtn').classList.toggle('ll-on',v); $('#ll-modetxt').textContent=v?'Commenting':'Comment'; }
+  // linear "read as a document" mode (P1.2): flip the tab axis off (the adapter's
+  // tab.applies() reads body.ll-linear) and let the adapter stitch the panels.
+  function setLinear(v){
+    state.linear=v; state.selected=null;
+    document.body.classList.toggle('ll-linear',v);
+    $('#ll-readmode').classList.toggle('ll-on',v);
+    $('#ll-readtxt').textContent=v?'Back to tabs':'Read as doc';
+    if(ADAPTER.linearLayout) ADAPTER.linearLayout(v);
+    render();
+  }
+  function wireToggles(){
+    $('#ll-handle').addEventListener('click',function(){ setOpen(true); });
+    $('#ll-collapse').addEventListener('click',function(){ setOpen(false); });
+    $('#ll-modebtn').addEventListener('click',function(){ setCommenting(!state.commenting); });
+    $('#ll-readmode').addEventListener('click',function(){ setLinear(!state.linear); });
+    var who=$('#ll-whoami'); if(who) who.addEventListener('click', changeUser);
+    var ex=$('#ll-export');
+    if(ex){
+      if(LLH){
+        ex.title='Download the comments, or hand them to an assistant';
+        ex.setAttribute('aria-haspopup','menu');
+        ex.addEventListener('click', function(ev){ ev.stopPropagation(); toggleExportMenu(); });
+        document.addEventListener('click', function(ev){ if(!ev.target.closest || !ev.target.closest('#ll-menu')) closeExportMenu(); });
+      } else ex.addEventListener('click', exportMarkdown);
+    }
+    // the orphan chip opens and closes the tray (P1.5)
+    var orph=$('#ll-orphan');
+    if(orph){
+      orph.setAttribute('role','button'); orph.setAttribute('tabindex','0');
+      var toggleTray=function(){ state.tray=!state.tray; render(); };
+      orph.addEventListener('click', toggleTray);
+      orph.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); toggleTray(); } });
+    }
+    // Escape backs out one step: a pick in progress first, then the tray
+    document.addEventListener('keydown',function(ev){
+      if(ev.key!=='Escape') return;
+      var menu=$('#ll-menu'); if(menu && menu.classList.contains('ll-show')){ closeExportMenu(); return; }
+      var pc=$('#ll-pastecard'); if(pc && pc.classList.contains('ll-show')){ closePasteCard(); return; }
+      var nc=$('#ll-namecard');
+      if(nc && nc.classList.contains('ll-show')){ closeNameCard(); return; }
+      if(state.reanchor){ setReanchor(null); state.tray=true; render(); }
+      else if(state.tray && $('#ll-composer').style.display!=='block'){ state.tray=false; render(); }
+      // strip and line modes show one card at a time: Escape puts it away
+      else if(state.selected && railMode()!=='full' && !(ev.target.closest && ev.target.closest('#ll-composer'))) closeCard();
+    });
+    // A click on the page, while the rail is showing. Not while commenting or
+    // re-attaching, where a click on the page already means something.
+    //  - on a tinted block (one with an open comment): open that comment. A
+    //    block with several steps through them on repeated clicks. Links,
+    //    buttons and fields inside the block keep their own click, and so
+    //    does a click that ends a text selection.
+    //  - anywhere else, in strip mode: the open card takes room from the
+    //    page, so the click puts it away.
+    document.addEventListener('click',function(ev){
+      if(!state.open || state.commenting || state.reanchor || !ev.target.closest) return;
+      if(ev.target.closest('#ll-composer,#ll-rail,#ll-dock,#ll-status,#ll-namecard,#ll-menu,#ll-pastecard')) return;
+      if(ADAPTER.controlSelector && ev.target.closest(ADAPTER.controlSelector)) return;   // the host handles its own controls
+      var hit=ev.target.closest('.ll-has'), picking=false;
+      try{ picking=String(window.getSelection()).length>0; }catch(e){}
+      if(hit && !picking && !ev.target.closest('a,button,input,select,textarea,label,summary')){
+        var id=hit.getAttribute('data-ll');
+        var here=comments.filter(function(c){ return c.anchor===id && !c.resolved && visible(c); });
+        if(here.length){
+          var at=-1; here.forEach(function(c,i){ if(c.id===state.selected) at=i; });
+          var next=here[(at+1)%here.length];
+          if(next.id!==state.selected) select(next.id);
+          return;
+        }
+      }
+      if(state.selected && railMode()==='strip') closeCard();
+    });
+    if(ADAPTER.linearLayout) $('#ll-readmode').classList.add('ll-avail'); // only if supported
+  }
+
+  // ---- host state change ----
+  // SPA-style hosts (e.g. app.innerHTML = view()) destroy and rebuild the DOM
+  // on navigation. If any anchored element went stale, re-scan the new DOM and
+  // re-resolve every comment by content — same machinery as load-time
+  // regeneration: exact hash -> fuzzy -> orphaned, never silently mis-anchored.
+  function onStateChange(){
+    state.selected=null;
+    var stale=false;
+    for(var k in anchors){ if(!document.documentElement.contains(anchors[k].el)){ stale=true; break; } }
+    if(stale){ initAnchors(); comments.forEach(resolveComment); }
+    render();
+  }
+
+  var memStore={load:function(){return null;}, save:function(){}, getUser:function(){return null;}, setUser:function(){}, subscribe:function(){return function(){};}};
+
+  function loadFromStore(){
+    var saved=STORE.load?STORE.load(NS):null;
+    if(saved && saved.length){
+      comments=saved.map(function(r){
+        // migrate older single-axis records (r.tab) to a state tuple
+        var st = r.state || (r.tab!=null ? {tab:r.tab} : (r.target&&r.target.state!=null ? {tab:r.target.state} : {}));
+        return {id:r.id, target:r.target, state:st, resolved:!!r.resolved, thread:r.thread||[]};
+      });
+      return true;
+    }
+    return false;
+  }
+
+  // load persisted comments (if any), else seed once on first visit
+  function bootstrapComments(){
+    if(loadFromStore()){
+      comments.forEach(resolveComment);            // re-find blocks via content anchors
+    } else if(STORE.seedOnEmpty!==false){          // managed shared rooms opt out of demo seeds
+      seedFromAdapter();
+      comments.forEach(resolveComment);
+      persist();
+    }
+  }
+
+  // ---- go ----
+  // opts.invite: greet a reviewer who has no name yet with the invite card
+  // (shared builds pass it; the local build does not).
+  function init(adapter, store, opts){
+    opts=opts||{};
+    ADAPTER=adapter;
+    if(ADAPTER.scan!=='document' && ADAPTER.scan!=='active' && typeof console!=='undefined' && console.warn){
+      console.warn("[LivingLink] adapter did not declare `scan` ('document' or 'active'); assuming 'document'. See DR-0009.");
+    }
+    STORE=store || (typeof window!=='undefined' && window.LivingLinkStore) || memStore;
+    NS=(typeof location!=='undefined' && location.pathname) || 'artifact';
+    ME=STORE.getUser ? STORE.getUser() : null;
+    updateWhoami();
+    wireComposer();
+    wireToggles();
+    ADAPTER.onStateChange(onStateChange);
+    window.addEventListener('resize', onResize);
+    // the page moving aside for the rail re-wraps its text: place the cards again once it has
+    document.body.addEventListener('transitionend', function(ev){
+      if(ev.target===document.body && ev.propertyName==='margin-right') layout(); });
+    window.addEventListener('scroll', layout, {passive:true});
+    initAnchors();
+
+    // A remote change that leaves the store empty (the last comment was
+    // deleted elsewhere) is still a change. An empty array clears the working
+    // copy; null means the store has nothing to say (not connected, never
+    // written) and is ignored. Without this a stale client keeps the deleted
+    // comment and writes it back on its next save.
+    var onRemote=function(){
+      if(loadFromStore()){ comments.forEach(resolveComment); render(); return; }
+      var saved=STORE.load?STORE.load(NS):null;
+      if(Array.isArray(saved) && !saved.length && comments.length){ comments=[]; state.selected=null; render(); }
+    };
+
+    if(typeof STORE.connect==='function'){
+      // managed/async backend (Liveblocks, Velt): paint immediately, then
+      // hydrate when the shared room connects, and re-render on remote changes.
+      setOpen(true); render();
+      Promise.resolve(STORE.connect(NS, onRemote)).then(function(){
+        bootstrapComments(); render();
+        wantInvite=!!opts.invite; greetIfInvited();
+      });
+    } else {
+      // sync backend (local store / in-memory); subscribe = cross-tab sync
+      bootstrapComments();
+      if(STORE.subscribe) STORE.subscribe(NS, onRemote);
+      setOpen(true); render();
+    }
+  }
+
+  return { init: init, connection: connection };
+})();
+
+</script>
+<script id="ll-flag">window.__LL_MANUAL_INIT__ = true;</script>
+<script id="ll-adapter">
+/* ===== Living Link adapter — tabbed artifacts (.tab-panel / switchTab) =====
+ *
+ * Everything host-specific lives here. To port the layer to a
+ * differently-built artifact, write a new adapter satisfying the same
+ * interface and load it instead of this one. The core never references
+ * .tab-panel, .tab-btn, or switchTab directly.
+ */
+(function(){
+
+  // current state = id of the active .tab-panel, minus the "tab-" prefix
+  function activeState(){ var p=document.querySelector('.tab-panel.active'); return p? p.id.replace(/^tab-/,'') : null; }
+
+  // the state a block lives in = its enclosing .tab-panel
+  function stateOf(el){ var p=el.closest('.tab-panel'); return p? p.id.replace(/^tab-/,'') : null; }
+
+  // human label for a state key = the text of the matching .tab-btn
+  function stateLabel(t){ var b=document.querySelector('.tab-btn[onclick*="\''+t+'\'"]'); return b? b.textContent.trim() : t; }
+
+  // notify the core whenever the host changes state: wrap the host's own
+  // switchTab(), and listen on .tab-btn clicks as a backstop.
+  function onStateChange(cb){
+    if(typeof window.switchTab==='function'){
+      var _st=window.switchTab;
+      window.switchTab=function(){ _st.apply(this,arguments); cb(); };
+    }
+    Array.prototype.slice.call(document.querySelectorAll('.tab-btn')).forEach(function(b){
+      b.addEventListener('click', function(){ setTimeout(cb,0); });
+    });
+  }
+
+  // ---- demo seed data (host-specific; resolves substrings to anchors) ----
+  function findIn(tab, substr){
+    var panel=document.getElementById('tab-'+tab); if(!panel) return null;
+    var els=panel.querySelectorAll('[data-ll]');
+    for(var i=0;i<els.length;i++){ if((els[i].innerText||'').indexOf(substr)>=0) return els[i].getAttribute('data-ll'); }
+    return null;
+  }
+  function getSeeds(){
+    var s=[
+      ["overview","The document tells a college","Amin","Strong line — can we reuse it as the opening of the CFF deck?"],
+      ["overview","week-one proof of concept","You","Reconsider this framing for the funder. 'Proof of concept' might undersell what we shipped."],
+      ["problem","too heavy for our size","Amin","Calbright will recognize themselves here. Worth leading the section with this row."],
+      ["next","mechanism detection","You","I want to talk through bringing this guard back — it was doing real work."]
+    ];
+    // state is now a tuple; this single-axis adapter records only {tab}
+    return s.map(function(x){ return {anchor:findIn(x[0],x[1]), state:{tab:x[0]}, who:x[2], text:x[3]}; });
+  }
+
+  // The one state axis this artifact has: the active tab. (A second axis is
+  // demonstrated in tabpanel-region.js.) axes[0] is the structural axis.
+  var tabAxis={
+    key:'tab',
+    active:activeState,         // current tab
+    of:stateOf,                 // the tab a block lives in
+    record:stateOf,             // structural: a comment records the block's tab
+    label:stateLabel,
+    applies:function(){ return !document.body.classList.contains('ll-linear'); }, // off in linear mode (P1.2)
+    elsewhereNoun:'other tabs'
+  };
+
+  // stitch all panels into one scroll for linear "read as a document" mode
+  function linearLayout(on){
+    Array.prototype.slice.call(document.querySelectorAll('.tab-panel')).forEach(function(p){ p.style.display = on?'block':''; });
+    Array.prototype.slice.call(document.querySelectorAll('.tab-btn')).forEach(function(b){ b.style.display = on?'none':''; });
+  }
+
+  var adapter={
+    // every tab's panel is in the DOM at once, so a scan sees the whole
+    // document and a block found on another tab has moved (DR-0009)
+    scan:'document',
+    // Tables anchor at the CELL level (td/th), not the whole table, so a
+    // comment attaches to one cell. The anchor pass assigns ids in DOM order
+    // and skips nested elements, so listing td/th (and not `table`) makes each
+    // cell its own commentable block.
+    selector:'.tab-panel h2,.tab-panel h3,.tab-panel h4,.tab-panel p,.tab-panel li,'+
+             '.tab-panel td,.tab-panel th,'+
+             '.tab-panel .callout,.tab-panel .critical,.tab-panel .success,.tab-panel .highlight-box,'+
+             '.tab-panel .big-quote,.tab-panel .about-box,.tab-panel .feedback-note',
+    controlSelector:'.tab-btn',
+    axes:[tabAxis],
+    linearLayout:linearLayout,
+    onStateChange:onStateChange,
+    getSeeds:getSeeds
+  };
+
+  // Default build: init immediately, picking up window.LivingLinkStore (local).
+  // Shared build: a classic flag script sets __LL_MANUAL_INIT__ before this
+  // runs, so we expose the adapter and let the async bootstrap call
+  // LivingLink.init(adapter, liveblocksStore) once the room is ready.
+  // See docs/liveblocks-setup.md.
+  if (typeof window !== 'undefined' && window.__LL_MANUAL_INIT__) {
+    window.LivingLinkPendingAdapter = adapter;
+  } else {
+    LivingLink.init(adapter);
+  }
+})();
+
+</script>
+<script id="ll-bootstrap-marker"></script>
+<script type="module" id="ll-bootstrap">
+/* ===== Living Link — Yjs store (DRAFT, shared tier, no lock-in) =====
+ *
+ * The generic-CRDT counterpart to the managed stores. Same five-method seam,
+ * but the substrate is plain Yjs — an open CRDT you can sync through a server
+ * you own. This is the "data ownership / no lock-in" option from
+ * docs/persistence-spike.md: the data model is Yjs (portable), not a vendor's,
+ * so you can change sync servers — or self-host — without rewriting anything.
+ *
+ * Why Yjs fits Living Link better than a comment product: it has NO opinion
+ * about comments or anchoring. We store our own records and keep our
+ * content-addressed, state-aware anchoring as the source of truth — exactly the
+ * build-vs-buy line the PRD draws. (Automerge is a fine alternative with the
+ * same shape; see docs/yjs-setup.md.)
+ *
+ * STATUS: wiring draft, NOT run end-to-end (no server/build step available in
+ * the authoring environment). The Yjs API used here (Y.Doc, Y.Map, transact,
+ * observe, WebsocketProvider) is stable and current, so this is closer to
+ * ready than the vendor drafts — but still confirm against your provider's docs.
+ *
+ * Async review needs server-side persistence (Amin comments while you're
+ * offline; you see it later). So the default transport is y-websocket against a
+ * persistence server you run (Hocuspocus / y-sweet / PartyKit). An optional
+ * IndexedDB cache makes it offline-first and instant on reload.
+ *
+ * Usage (shared build bootstrap):
+ *   import { createYjsStore } from "./src/stores/yjs.js";
+ *   const store = createYjsStore({ serverUrl: "wss://your-sync-server.example" });
+ *   LivingLink.init(window.LivingLinkPendingAdapter, store);
+ */
+// The server is Hocuspocus, which extends the y-websocket wire protocol —
+// the generic y-websocket provider can open a socket to it but then dies on
+// the first message ("Unknown message type"), so comments silently never
+// sync. The client MUST be @hocuspocus/provider, version-matched to
+// server/package.json. `?deps=` pins the provider's internal yjs to the SAME
+// build we import here — two yjs instances would break instanceof checks.
+import * as Y from "https://esm.sh/yjs@13.6.27";
+import { HocuspocusProvider } from "https://esm.sh/@hocuspocus/provider@2.15.3?deps=yjs@13.6.27";
+// Optional offline cache — uncomment and pass { offline:true } to enable:
+// import { IndexeddbPersistence } from "https://esm.sh/y-indexeddb@9?deps=yjs@13.6.27";
+
+// Identity is namespaced per artifact path (like rooms), so a name set on one
+// artifact never silently carries over to another served from the same origin.
+var PAGE = (typeof location !== "undefined" && location.pathname) || "default";
+var USER_KEY = "livinglink:user:" + PAGE;
+
+function getLocal(k){ try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+function setLocal(k, v){ try { window.localStorage.setItem(k, v); } catch (e) {} }
+
+function createYjsStore(opts){
+  opts = opts || {};
+  if (!opts.serverUrl) console.warn("[LivingLink/yjs] no serverUrl — comments won't sync between machines.");
+  var roomPrefix = opts.roomPrefix || "livinglink:";
+  // opts.room: a fixed room name baked in at build time. Without it the room
+  // is the page's path, which a static host may rewrite (some drop ".html"),
+  // and an invite key is tied to the exact room name.
+  // opts.token: the invite key from the link. The server checks it when it
+  // runs with LL_SECRET; otherwise it is ignored.
+  // opts.onStatus(kind): told what the connection is doing, so the page can
+  // say so. Kinds: "ok" (connected and in step), "denied" (the server refused
+  // the key), "offline" (no connection). Until "ok", comments exist only in
+  // this tab's memory and are lost on reload.
+  var report = (typeof opts.onStatus === "function") ? opts.onStatus : function(){};
+  var seedOnEmpty = opts.seed === true;      // shared rooms default to no demo seeds
+  var syncTimeout = opts.syncTimeoutMs || 1500;
+
+  function userName(){ return getLocal(USER_KEY); }
+  function userId(){
+    var id = getLocal("livinglink:uid");
+    if (!id){ id = "guest-" + Math.random().toString(36).slice(2, 10); setLocal("livinglink:uid", id); }
+    return id;
+  }
+
+  var rooms = {}; // ns -> { ydoc, ymap, provider, mirror }
+
+  function recordsOf(ymap){
+    var out = [];
+    ymap.forEach(function(v){ out.push(v); });  // plain JSON records keyed by comment id
+    return out;
+  }
+
+  function connect(ns, onChange){
+    var ydoc = new Y.Doc();
+    var roomId = roomPrefix + (opts.room || ns);
+    var denied = false, synced = false;
+    var ymap = ydoc.getMap("comments");
+    var st = rooms[ns] = { ydoc: ydoc, ymap: ymap, provider: null, mirror: [] };
+
+    // optional offline-first local cache
+    // if (opts.offline) new IndexeddbPersistence(roomId, ydoc);
+
+    var provider = opts.serverUrl ? new HocuspocusProvider({
+      url: opts.serverUrl,
+      name: roomId,
+      document: ydoc,
+      // always send something: a server that checks keys answers a wrong one
+      // with a refusal, which is how the page learns the link is not valid
+      token: opts.token || "none",
+      onAuthenticationFailed: function(){ denied = true; synced = false; report("denied"); },
+      onSynced: function(){ if (!denied){ synced = true; report("ok"); } },
+      // The connection dropped. The provider keeps retrying by itself and
+      // fires onSynced again when it is back in step. (onStatus alone was not
+      // enough: with the server gone it never reported "disconnected".)
+      onDisconnect: function(){ if (!denied){ synced = false; report("offline"); } },
+      onClose: function(){ if (!denied && synced){ synced = false; report("offline"); } },
+    }) : null;
+    if (!provider) report("offline");
+    st.provider = provider;
+
+    // publish identity for future presence (P2.1) via the awareness protocol
+    if (provider && provider.awareness) {
+      provider.awareness.setLocalStateField("user", { id: userId(), name: userName() || "Guest" });
+    }
+
+    var refresh = function(){ st.mirror = recordsOf(ymap); if (onChange) onChange(); };
+    ymap.observe(refresh);
+
+    return new Promise(function(resolve){
+      var done = false;
+      // if the room has not synced by the time we stop waiting, say so
+      var finish = function(){ if (!done){ done = true; refresh(); if (!synced && !denied) report("offline"); resolve(); } };
+      if (provider) provider.on("synced", finish);   // Hocuspocus event name (y-websocket used "sync")
+      // offline-first: don't block forever if the server is slow/absent
+      setTimeout(finish, syncTimeout);
+    });
+  }
+
+  function load(ns){
+    var st = rooms[ns];
+    return st ? recordsOf(st.ymap) : null;   // null until connected
+  }
+
+  function save(ns, records){
+    var st = rooms[ns];
+    if (!st) return;
+    var ydoc = st.ydoc, ymap = st.ymap;
+    ydoc.transact(function(){
+      var keep = {};
+      records.forEach(function(r){ keep[r.id] = 1; ymap.set(r.id, r); });   // upsert
+      var toDelete = [];
+      ymap.forEach(function(_v, k){ if (!keep[k]) toDelete.push(k); });
+      toDelete.forEach(function(k){ ymap.delete(k); });                      // prune removed
+    });
+  }
+
+  function getUser(){ return userName(); }
+  function setUser(name){
+    setLocal(USER_KEY, name);
+    // reflect into awareness on any open rooms
+    Object.keys(rooms).forEach(function(ns){
+      var p = rooms[ns].provider;
+      if (p && p.awareness) p.awareness.setLocalStateField("user", { id: userId(), name: name });
+    });
+  }
+
+  return {
+    connect: connect,
+    load: load,
+    save: save,
+    getUser: getUser,
+    setUser: setUser,
+    seedOnEmpty: seedOnEmpty,
+    disconnect: function(ns){ var st = rooms[ns]; if (st && st.provider){ st.provider.destroy(); st.ydoc.destroy(); delete rooms[ns]; } }
+  };
+}
+
+  const ROOM = "livinglink-overview", WS = "wss://livinglink-sync.fly.dev";
+  const params = new URLSearchParams(location.search);
+  const serverUrl = params.get("ws") || WS ||
+    (location.protocol === "https:" ? "wss://" : "ws://") + location.hostname + ":1234";
+  // The invite key arrives in the link as ?k=… and is remembered in this
+  // browser for this page, so a reload or a bookmark without it still works.
+  const KEY_AT = "livinglink:key:" + (ROOM || location.pathname);
+  let key = params.get("k");
+  try { if (key) localStorage.setItem(KEY_AT, key); else key = localStorage.getItem(KEY_AT); } catch (e) {}
+  const store = createYjsStore({
+    serverUrl, room: ROOM || undefined, token: key || undefined,
+    onStatus: (kind) => {
+      // a refused key is not worth remembering
+      if (kind === "denied") { try { localStorage.removeItem(KEY_AT); } catch (e) {} }
+      LivingLink.connection(kind);
+    },
+  });
+  LivingLink.init(window.LivingLinkPendingAdapter, store, { invite: true });
+</script>
+</body>
+</html>
