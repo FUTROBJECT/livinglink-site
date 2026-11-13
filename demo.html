@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Field Metrics — Two-Axis Demo</title>
+<title>Field Metrics: Two-Axis Demo</title>
 <style>
   /* ===== design tokens — Stripe/Notion/Linear-inspired ===== */
   :root{
@@ -205,6 +205,7 @@ body.ll-open #ll-rail{display:block;}
 .ll-btn:hover{border-color:var(--ll-border-strong);color:var(--ll-text);background:var(--ll-surface);}
 .ll-btn.ll-pri{background:var(--ll-accent);color:#fff;border-color:var(--ll-accent);}
 .ll-btn.ll-pri:hover{background:var(--ll-accent-text);border-color:var(--ll-accent-text);color:#fff;}
+.ll-btn.ll-danger:hover{border-color:#c0392b;color:#c0392b;background:var(--ll-surface);}
 .ll-replybox{display:none;margin-top:7px;}
 .ll-replybox.ll-show{display:block;}
 .ll-replybox input{width:100%;border:1px solid var(--ll-border);border-radius:6px;padding:6px 8px;
@@ -231,13 +232,17 @@ body.ll-open #ll-rail{display:block;}
 .ll-dock-sep{width:1px;height:18px;background:var(--ll-border);margin:0 3px;flex:none;}
 
 /* one slot, two states: "Comments · n" opens the rail; "Hide" closes it */
-#ll-collapse{display:none;}
-body.ll-open #ll-handle{display:none;}
-body.ll-open #ll-collapse{display:inline-flex;}
+/* scoped under #ll-dock so they outrank the `#ll-dock button` display rule */
+#ll-dock #ll-collapse{display:none;}
+body.ll-open #ll-dock #ll-handle{display:none;}
+body.ll-open #ll-dock #ll-collapse{display:inline-flex;}
 
 /* read-mode appears in the dock only when the adapter supports it */
 #ll-readmode{display:none;}
 #ll-readmode.ll-avail{display:inline-flex;}
+
+/* identity chip — always shows who you're commenting as; click to change */
+#ll-whoami .ll-av{width:17px;height:17px;font-size:8.5px;box-shadow:none;background:var(--ll-border-strong);}
 
 /* status chips — stacked above the dock, same center axis */
 #ll-status{position:fixed;bottom:66px;left:50%;transform:translateX(-50%);z-index:60;
@@ -252,6 +257,38 @@ body.ll-open #ll-collapse{display:inline-flex;}
   color:var(--ll-warn-text);border-radius:999px;padding:6px 14px;font-size:11.5px;
   font-weight:500;max-width:min(480px,90vw);box-shadow:var(--ll-shadow-sm);cursor:pointer;text-align:center;}
 #ll-orphan.ll-show{display:block;}
+#ll-orphan:focus-visible{outline:2px solid var(--ll-accent);outline-offset:2px;}
+
+/* orphaned-comment tray (P1.5) — opens above the chips from the orphan chip.
+   Its elements are created by the core, so there is no markup for it. */
+#ll-tray{display:none;width:min(440px,92vw);max-height:min(58vh,520px);overflow:auto;box-sizing:border-box;
+  background:var(--ll-surface);border:1px solid var(--ll-warn-border);border-radius:14px;
+  box-shadow:var(--ll-shadow-lg);padding:14px;font-size:13px;line-height:1.5;color:var(--ll-text);text-align:left;
+  scrollbar-width:thin;scrollbar-color:var(--ll-border-strong) transparent;}
+#ll-tray.ll-show{display:block;}
+.ll-tray-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;}
+.ll-tray-sub{font-size:11.5px;color:var(--ll-muted);font-weight:400;margin-top:2px;}
+.ll-orph{border-top:1px solid var(--ll-border);padding-top:12px;margin-top:12px;}
+.ll-orph .ll-snip{border-left-color:var(--ll-warn-border);}
+.ll-sugg-h{font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ll-muted);margin:10px 0 4px;}
+.ll-sugg-none{margin:8px 0 2px;}
+.ll-sugg{display:flex;align-items:center;gap:8px;padding:6px 8px;margin-bottom:4px;
+  background:var(--ll-surface-2);border-radius:8px;}
+.ll-sugg-t{flex:1;min-width:0;font-size:12px;color:var(--ll-text-2);cursor:pointer;}
+.ll-sugg-t:hover{color:var(--ll-text);}
+.ll-sugg-m{display:block;font-size:10.5px;color:var(--ll-muted);margin-top:1px;}
+.ll-sugg .ll-btn{flex:none;background:var(--ll-surface);border-color:var(--ll-border);}
+
+/* picking a block for an orphan: a chip says what to do; blocks highlight on hover */
+#ll-pick,#ll-note{display:none;background:var(--ll-surface);border:1px solid var(--ll-accent);
+  color:var(--ll-text);border-radius:999px;padding:6px 8px 6px 14px;font-size:11.5px;font-weight:500;
+  max-width:min(520px,92vw);box-shadow:var(--ll-shadow-md);text-align:center;}
+#ll-note{padding:6px 14px;border-color:var(--ll-border);color:var(--ll-text-2);}
+#ll-pick.ll-show,#ll-note.ll-show{display:block;}
+#ll-pick .ll-btn{margin-left:6px;}
+body.ll-reanchoring #ll-orphan{display:none;}
+body.ll-reanchoring [data-ll]{cursor:crosshair;}
+body.ll-reanchoring [data-ll]:hover{background:var(--ll-accent-soft);box-shadow:0 0 0 2px var(--ll-accent);border-radius:3px;}
 
 /* composer */
 #ll-composer{position:fixed;z-index:70;width:308px;background:var(--ll-surface);border:1px solid var(--ll-border);
@@ -275,7 +312,7 @@ body.ll-open #ll-collapse{display:inline-flex;}
   <div class="doc-head">
     <div>
       <h1>Field Metrics</h1>
-      <p class="sub">Two-axis demo — tab <b>and</b> region. A comment remembers both; it surfaces only in the state it was made in.</p>
+      <p class="sub">Two-axis demo: tab <b>and</b> region. A comment remembers both; it surfaces only in the state it was made in.</p>
     </div>
     <button id="themetoggle" title="Toggle theme"><span id="themetxt">◐ Dark</span></button>
   </div>
@@ -294,7 +331,7 @@ body.ll-open #ll-collapse{display:inline-flex;}
 
   <div class="tab-panel" id="tab-metrics">
     <h2>Throughput by band</h2>
-    <p>Units completed per work-band. Use the region control to switch the view — anything you comment on here remembers which region was selected when you wrote it.</p>
+    <p>Units completed per work-band. Use the region control to switch the view. Anything you comment on here remembers which region was selected when you wrote it.</p>
 
     <div class="filterrow">
       <span class="lbl">Region</span>
@@ -326,7 +363,7 @@ body.ll-open #ll-collapse{display:inline-flex;}
   <div class="tab-panel" id="tab-plan">
     <h2>Next steps</h2>
     <p>Pull the daily logs for the under-forecast bands before the review, and decide whether the regional split changes how we staff the next cycle.</p>
-    <div class="note">This callout lives on the Plan tab. A comment here is invisible on Summary and Metrics — and the margin tells you it's there.</div>
+    <div class="note">This callout lives on the Plan tab. A comment here is invisible on Summary and Metrics, and the margin tells you it's there.</div>
   </div>
 
   <script>
@@ -416,6 +453,15 @@ body.ll-open #ll-collapse{display:inline-flex;}
   <button id="ll-collapse" title="Hide the comment rail">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7a4.5 4.5 0 0 1-4.5 4.5H6l-3 2.5v-3.4A4.49 4.49 0 0 1 1.5 7 4.5 4.5 0 0 1 6 2.5h3A4.5 4.5 0 0 1 13.5 7z"/><path d="M5.5 7h4"/></svg>
     <span>Hide</span>
+  </button>
+  <button id="ll-export" title="Download all comments as a Markdown file">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v7.5M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg>
+    <span>Export</span>
+  </button>
+  <span class="ll-dock-sep"></span>
+  <button id="ll-whoami" title="Set the name shown on your comments">
+    <span class="ll-av" id="ll-whoav">?</span>
+    <span id="ll-whotxt">Set name</span>
   </button>
 </div>
 <div id="ll-rail"></div>
@@ -523,12 +569,31 @@ body.ll-open #ll-collapse{display:inline-flex;}
     return { id: null, status: 'orphaned', score: r.score };
   }
 
+  // Ranked near-misses for a target that could not be resolved: the input to
+  // the orphaned-comment tray (P1.5). Never used to anchor automatically. The
+  // tray shows them and a person picks, so a score below THRESHOLD is fine
+  // here; SUGGEST_FLOOR only keeps unrelated blocks out of the list.
+  // Returns up to n of { id, score }, best first; equal scores prefer the
+  // target's own state.
+  var SUGGEST_FLOOR = 0.2;
+  function suggest(target, blocks, n){
+    var scored = [];
+    for (var i = 0; i < blocks.length; i++){
+      var s = similarity(blocks[i].text, target.quote);
+      if (s >= SUGGEST_FLOOR) scored.push({ id: blocks[i].id, score: s, same: blocks[i].state === target.state ? 1 : 0, i: i });
+    }
+    scored.sort(function(p, q){ return (q.score - p.score) || (q.same - p.same) || (p.i - q.i); });
+    return scored.slice(0, n || 3).map(function(c){ return { id: c.id, score: c.score }; });
+  }
+
   var API = {
     THRESHOLD: THRESHOLD,
+    SUGGEST_FLOOR: SUGGEST_FLOOR,
     normalize: normalize,
     hashText: hashText,
     similarity: similarity,
-    resolve: resolve
+    resolve: resolve,
+    suggest: suggest
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
@@ -593,7 +658,19 @@ body.ll-open #ll-collapse{display:inline-flex;}
     return commentState[axisDefs[0].key];
   }
 
-  var API = { isVisible: isVisible, stateLabel: stateLabel, primaryValue: primaryValue };
+  // Manual re-anchoring (P1.5): a reviewer moves an orphaned comment onto a
+  // block. The structural axis follows the block, because a block lives in
+  // exactly one structural state. Every other recorded axis is kept:
+  // re-anchoring fixes WHERE the comment sits, not the state it was made in.
+  // Returns a new object; the input is not mutated.
+  function reanchorState(commentState, axisDefs, blockPrimary){
+    var out = {}, src = commentState || {};
+    for (var k in src){ if (Object.prototype.hasOwnProperty.call(src, k)) out[k] = src[k]; }
+    if (axisDefs.length) out[axisDefs[0].key] = blockPrimary;
+    return out;
+  }
+
+  var API = { isVisible: isVisible, stateLabel: stateLabel, primaryValue: primaryValue, reanchorState: reanchorState };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   else root.LivingLinkState = API;
@@ -624,7 +701,11 @@ body.ll-open #ll-collapse{display:inline-flex;}
  */
 (function(root){
   var PREFIX = 'livinglink:';
-  var USER_KEY = PREFIX + 'user';
+  // Identity is namespaced per artifact path (like comment rooms), so a name
+  // set on one artifact never silently carries over to another on the same
+  // origin. Node (tests) has no `location` — fall back to a fixed key.
+  var PAGE = (typeof location !== 'undefined' && location.pathname) || 'default';
+  var USER_KEY = PREFIX + 'user:' + PAGE;
 
   // probe localStorage; fall back to an in-memory shim if unusable
   var mem = {};
@@ -712,24 +793,54 @@ window.LivingLink = (function(){
   var LLS=(typeof window!=='undefined'?window.LivingLinkState:null);  // visibility module
   var ME=null, PEER="Amin";                       // ME resolved from the store on init
   var COLOR={"You":"#c0392b","Amin":"#2c6e9c"};   // seed authors keep fixed colors
-  var state={open:false, commenting:false, selected:null, linear:false};
+  // tray: orphaned-comment tray open; reanchor: id of the comment being re-attached by picking a block
+  var state={open:false, commenting:false, selected:null, linear:false, tray:false, reanchor:null};
   var anchors={}, blockIndex=[], comments=[], uid=0;
   var $=function(s,r){return (r||document).querySelector(s);};
   var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
   function nid(){return "ll"+Date.now().toString(36)+"-"+(++uid);}  // collision-safe across sessions
-  function esc(s){return s.replace(/[&<>"]/g,function(m){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[m];});}
+  // Everything a reviewer typed (names as well as comment text) goes through
+  // esc() before it reaches innerHTML: in a shared room it came from someone
+  // else. Tolerates a missing value so one malformed record cannot break render.
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(m){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[m];});}
   // deterministic avatar color for any name (fixed for seed authors)
-  function colorFor(w){ if(COLOR[w]) return COLOR[w]; var h=0; for(var i=0;i<w.length;i++){h=(h*31+w.charCodeAt(i))>>>0;} return 'hsl('+(h%360)+',45%,42%)'; }
-  function av(w){return '<span class="ll-av" style="background:'+colorFor(w)+'">'+(w||'?').slice(0,1).toUpperCase()+'</span>';}
+  function colorFor(w){ w=String(w==null?'':w); if(Object.prototype.hasOwnProperty.call(COLOR,w)) return COLOR[w]; var h=0; for(var i=0;i<w.length;i++){h=(h*31+w.charCodeAt(i))>>>0;} return 'hsl('+(h%360)+',45%,42%)'; }
+  function av(w){return '<span class="ll-av" style="background:'+colorFor(w)+'">'+esc(String(w||'?').slice(0,1).toUpperCase())+'</span>';}
 
   // ---- identity: a lightweight, locally-remembered name (P1.4 v1) ----
+  // The dock always shows who you're commenting as (#ll-whoami) so a
+  // remembered identity is never silent — click it to change.
+  function updateWhoami(){
+    var btn=$('#ll-whoami'); if(!btn) return;
+    var avEl=$('#ll-whoav'), txt=$('#ll-whotxt');
+    if(ME){
+      avEl.style.background=colorFor(ME);
+      avEl.textContent=ME.slice(0,1).toUpperCase();
+      txt.textContent=ME;
+      btn.title='Commenting as '+ME+'. Click to change.';
+    } else {
+      avEl.style.background='';
+      avEl.textContent='?';
+      txt.textContent='Set name';
+      btn.title='Set the name shown on your comments';
+    }
+  }
   function ensureUser(){
     if(ME) return ME;
     var name=null;
     try{ name=window.prompt('Your name (shown on your comments):',''); }catch(e){}
     name=(name||'').trim()||'Guest';
     ME=name; if(STORE && STORE.setUser) STORE.setUser(name);
+    updateWhoami();
     return ME;
+  }
+  function changeUser(){
+    var name=null;
+    try{ name=window.prompt('Your name (shown on your comments):', ME||''); }catch(e){}
+    if(name==null) return;                 // cancelled — keep current identity
+    name=name.trim(); if(!name) return;
+    ME=name; if(STORE && STORE.setUser) STORE.setUser(name);
+    updateWhoami();
   }
 
   // ---- persistence: serialize the durable parts only (runtime anchor/el are
@@ -797,7 +908,19 @@ window.LivingLink = (function(){
     if(!c.target) return;
     var r=LLA.resolve(c.target, blockIndex);
     if(r.id){ c.anchor=r.id; if(!c.state) c.state={}; c.state[primaryAxis().key]=anchors[r.id].state; c.orphaned=false; c.match=r.status; }
-    else { c.anchor=null; c.orphaned=true; c.match='orphaned'; }
+    else {
+      c.anchor=null;
+      // "Orphaned" must mean the block is GONE, not merely off-screen. In
+      // SPA hosts only the rendered screen's blocks are in the DOM, so a
+      // comment whose home state contributed no blocks to this scan is just
+      // unmounted — it counts in the "elsewhere" chip and re-resolves when
+      // its screen renders. Only flag orphaned when the home state's blocks
+      // ARE present and the comment's block still can't be found.
+      var home=c.target.state;
+      var mounted=(home==null) || blockIndex.some(function(b){ return b.state===home; });
+      c.orphaned=mounted;
+      c.match=mounted?'orphaned':'unmounted';
+    }
   }
   function snippet(id){ var a=anchors[id]; if(!a) return id;
     var t=(a.el.innerText||'').replace(/\s+/g,' ').trim();
@@ -830,14 +953,14 @@ window.LivingLink = (function(){
       if(c.id===state.selected) a.el.classList.add('ll-anchored');
       var head=c.thread[0];
       var replies=c.thread.slice(1).map(function(r){
-        return '<div class="ll-reply"><div class="ll-who">'+av(r.who)+r.who+'</div>'+esc(r.text)+'</div>'; }).join('');
+        return '<div class="ll-reply"><div class="ll-who">'+av(r.who)+esc(r.who)+'</div>'+esc(r.text)+'</div>'; }).join('');
       var card=document.createElement('div');
       card.className='ll-card'+(c.resolved?' ll-resolved':'')+(c.id===state.selected?' ll-sel':'');
       card.setAttribute('data-anchor', c.anchor); card.setAttribute('data-id', c.id);
       var expanded=(c.id===state.selected);
       card.innerHTML=
         '<div class="ll-snip">“'+esc(snippet(c.anchor))+'”</div>'+
-        '<div class="ll-top"><div class="ll-who">'+av(head.who)+head.who+'</div>'+
+        '<div class="ll-top"><div class="ll-who">'+av(head.who)+esc(head.who)+'</div>'+
           '<span class="ll-badge">'+esc(stateLabelOf(c))+(c.resolved?' · done':'')+'</span></div>'+
         '<div class="ll-text">'+esc(head.text)+'</div>'+
         (expanded?replies:(c.thread.length>1?'<div class="ll-snip">'+(c.thread.length-1)+' more repl'+(c.thread.length>2?'ies':'y')+'…</div>':''))+
@@ -845,6 +968,9 @@ window.LivingLink = (function(){
           '<div class="ll-actions">'+
             '<button class="ll-btn" data-act="reply">Reply</button>'+
             '<button class="ll-btn" data-act="resolve">'+(c.resolved?'Reopen':'Resolve')+'</button>'+
+            // delete is author-only: cosmetic gating (identity is a self-chosen
+            // name, not auth) but it keeps the UI honest in a trusted review
+            (ME&&head.who===ME?'<button class="ll-btn ll-danger" data-act="delete">Delete</button>':'')+
           '</div>'+
           '<div class="ll-replybox"><input type="text" placeholder="Reply… (Enter)"></div>'):'');
       card.addEventListener('click', function(ev){
@@ -852,6 +978,15 @@ window.LivingLink = (function(){
         select(c.id);
       });
       if(expanded){
+        var del=card.querySelector('[data-act="delete"]');
+        if(del) del.addEventListener('click',function(ev){
+          ev.stopPropagation();
+          var ok=true; try{ ok=window.confirm('Delete this comment'+(c.thread.length>1?' and its '+(c.thread.length-1)+' repl'+(c.thread.length>2?'ies':'y'):'')+' for everyone?'); }catch(e){}
+          if(!ok) return;
+          comments=comments.filter(function(x){ return x.id!==c.id; });
+          if(state.selected===c.id) state.selected=null;
+          persist(); render();   // persist prunes the record server-side, so the delete syncs
+        });
         card.querySelector('[data-act="resolve"]').addEventListener('click',function(ev){
           ev.stopPropagation(); c.resolved=!c.resolved; if(c.resolved&&state.selected===c.id)state.selected=null; persist(); render(); });
         var rb=card.querySelector('[data-act="reply"]'), box=card.querySelector('.ll-replybox'), inp=box.querySelector('input');
@@ -894,25 +1029,153 @@ window.LivingLink = (function(){
   function elsewhere(){
     var box=$('#ll-elsewhere');
     var groups={};
-    // group hidden, unresolved comments by their structural (primary) state value
-    comments.forEach(function(c){ if(!visible(c)&&!c.resolved){ var k=primaryValue(c); if(k!=null) groups[k]=(groups[k]||0)+1; }});
+    // group hidden, unresolved comments by their structural (primary) state value.
+    // Orphans are left out: their block is gone, so they are not "on" any
+    // state. The orphan chip and tray account for them instead.
+    comments.forEach(function(c){ if(!visible(c)&&!c.resolved&&!c.orphaned){ var k=primaryValue(c); if(k!=null) groups[k]=(groups[k]||0)+1; }});
     var keys=Object.keys(groups); if(!keys.length){ box.classList.remove('ll-show'); return; }
     var total=keys.reduce(function(s,t){return s+groups[t];},0);
     var noun=(primaryAxis().elsewhereNoun)||'other states';
-    box.innerHTML='<b>'+total+'</b> comment'+(total>1?'s':'')+' on '+noun+' — '+
+    box.innerHTML='<b>'+total+'</b> comment'+(total>1?'s':'')+' on '+noun+': '+
       keys.map(function(t){return groups[t]+' on “'+esc(primaryLabel(t))+'”';}).join(', ')+'.';
     box.classList.add('ll-show');
   }
   // orphaned comments: block could not be re-found after regeneration.
   // Flagged here, never silently mis-anchored (P0.2).
+  // The chip counts them and opens the tray (P1.5), where a person re-attaches
+  // each one by hand.
+  function lostComments(){ return comments.filter(function(c){return c.orphaned&&!c.resolved;}); }
   function orphans(){
     var box=$('#ll-orphan');
-    var lost=comments.filter(function(c){return c.orphaned&&!c.resolved;});
-    if(!lost.length){ box.classList.remove('ll-show'); box.title=''; return; }
-    box.innerHTML='⚠ <b>'+lost.length+'</b> comment'+(lost.length>1?'s':'')+
-      ' lost their block after an edit — re-anchor needed.';
-    box.title=lost.map(function(c){return '• “'+(c.target?c.target.quote:'')+'” — '+c.thread[0].who+': '+c.thread[0].text;}).join('\n');
-    box.classList.add('ll-show');
+    var lost=lostComments();
+    if(!lost.length){ box.classList.remove('ll-show'); box.title=''; state.tray=false; }
+    else {
+      box.innerHTML='⚠ <b>'+lost.length+'</b> comment'+(lost.length>1?'s':'')+
+        ' lost '+(lost.length>1?'their':'its')+' block after an edit. '+(state.tray?'Hide':'Review')+'.';
+      box.title=state.tray?'Hide the orphaned comments':'Show the orphaned comments and re-attach them';
+      box.setAttribute('aria-expanded', state.tray?'true':'false');
+      box.classList.add('ll-show');
+    }
+    renderTray(lost);
+  }
+
+  // ---- orphaned-comment tray (P1.5) ----
+  // Lists every comment whose block could not be re-found, with the nearest
+  // blocks in the current document, and lets a person re-attach it: either to
+  // one of those suggestions or to any block they click on the page. Nothing
+  // here anchors on its own. The tray's elements are created by the core, not
+  // by comment-layer.html, so hosts that carry their own copy of the markup
+  // (linked builds) get it without a markup change.
+  function trayEls(){
+    var st=$('#ll-status'); if(!st) return null;
+    var tray=$('#ll-tray');
+    if(!tray){
+      var note=document.createElement('div'); note.id='ll-note'; note.setAttribute('role','status');
+      var pick=document.createElement('div'); pick.id='ll-pick';
+      tray=document.createElement('div'); tray.id='ll-tray'; tray.setAttribute('role','region'); tray.setAttribute('aria-label','Orphaned comments');
+      st.insertBefore(note, st.firstChild); st.insertBefore(pick, note); st.insertBefore(tray, pick);
+    }
+    return {tray:tray, pick:$('#ll-pick'), note:$('#ll-note')};
+  }
+  function byId(id){ for(var i=0;i<comments.length;i++){ if(comments[i].id===id) return comments[i]; } return null; }
+  function shortQuote(c){ var q=(c.target&&c.target.quote)||''; return q.length>72 ? q.slice(0,72)+'…' : (q||'(no text recorded)'); }
+  var noteTimer=null;
+  function note(text){
+    var els=trayEls(); if(!els) return;
+    els.note.textContent=text; els.note.classList.add('ll-show');
+    clearTimeout(noteTimer); noteTimer=setTimeout(function(){ els.note.classList.remove('ll-show'); }, 6000);
+  }
+
+  function renderTray(lost){
+    var els=trayEls(); if(!els) return;
+    // a pick in progress ends if its comment is gone or no longer orphaned
+    if(state.reanchor){ var rc=byId(state.reanchor); if(!rc||!rc.orphaned||rc.resolved) setReanchor(null); }
+
+    if(state.reanchor){
+      els.pick.innerHTML='Click the block this comment belongs to: <b>“'+esc(shortQuote(byId(state.reanchor)))+'”</b> '+
+        '<button class="ll-btn" data-act="cancel-pick">Cancel</button>';
+      els.pick.querySelector('[data-act="cancel-pick"]').addEventListener('click',function(){ setReanchor(null); state.tray=true; render(); });
+      els.pick.classList.add('ll-show');
+    } else { els.pick.classList.remove('ll-show'); els.pick.innerHTML=''; }
+
+    if(!state.tray || state.reanchor || !lost.length){ els.tray.classList.remove('ll-show'); els.tray.innerHTML=''; return; }
+
+    var keepScroll=els.tray.scrollTop;
+    els.tray.innerHTML='';
+    var head=document.createElement('div'); head.className='ll-tray-head';
+    head.innerHTML='<div><b>'+lost.length+' orphaned comment'+(lost.length>1?'s':'')+'</b>'+
+      '<div class="ll-tray-sub">The text each was attached to is no longer in the document. Attach it to a block, or resolve it.</div></div>'+
+      '<button class="ll-btn" data-act="close-tray">Close</button>';
+    head.querySelector('[data-act="close-tray"]').addEventListener('click',function(){ state.tray=false; render(); });
+    els.tray.appendChild(head);
+
+    lost.forEach(function(c){
+      var first=c.thread[0]||{who:'?',text:''};
+      var sugg=LLA.suggest(c.target, blockIndex, 3);
+      var item=document.createElement('div'); item.className='ll-orph'; item.setAttribute('data-id', c.id);
+      item.innerHTML=
+        '<div class="ll-snip">“'+esc(shortQuote(c))+'”</div>'+
+        '<div class="ll-top"><div class="ll-who">'+av(first.who)+esc(first.who)+'</div>'+
+          '<span class="ll-badge">'+esc(stateLabelOf(c))+'</span></div>'+
+        '<div class="ll-text">'+esc(first.text)+'</div>'+
+        (c.thread.length>1?'<div class="ll-tray-sub">'+(c.thread.length-1)+' repl'+(c.thread.length>2?'ies':'y')+'</div>':'')+
+        (sugg.length?'<div class="ll-sugg-h">Closest blocks now</div>'
+                    :'<div class="ll-tray-sub ll-sugg-none">Nothing in the document now is close to this text.</div>')+
+        sugg.map(function(s){
+          var a=anchors[s.id]; var where=(a&&a.state!=null)?primaryLabel(a.state):'';
+          return '<div class="ll-sugg" data-block="'+esc(s.id)+'">'+
+            '<div class="ll-sugg-t" title="Show this block">“'+esc(snippet(s.id))+'”'+
+              '<span class="ll-sugg-m">'+esc(where)+(where?' · ':'')+Math.round(s.score*100)+'% alike</span></div>'+
+            '<button class="ll-btn" data-act="attach">Attach</button></div>';
+        }).join('')+
+        '<div class="ll-actions">'+
+          '<button class="ll-btn ll-pri" data-act="pick">Pick a block on the page</button>'+
+          '<button class="ll-btn" data-act="resolve">Resolve</button>'+
+          (ME&&first.who===ME?'<button class="ll-btn ll-danger" data-act="delete">Delete</button>':'')+
+        '</div>';
+      $$('.ll-sugg', item).forEach(function(row){
+        var bid=row.getAttribute('data-block');
+        row.querySelector('.ll-sugg-t').addEventListener('click',function(){ flashBlock(bid); });
+        row.querySelector('[data-act="attach"]').addEventListener('click',function(){ attach(c, bid); });
+      });
+      item.querySelector('[data-act="pick"]').addEventListener('click',function(){ closeComposer(); setReanchor(c.id); render(); });
+      item.querySelector('[data-act="resolve"]').addEventListener('click',function(){ c.resolved=true; persist(); render(); });
+      var del=item.querySelector('[data-act="delete"]');
+      if(del) del.addEventListener('click',function(){
+        var ok=true; try{ ok=window.confirm('Delete this comment'+(c.thread.length>1?' and its '+(c.thread.length-1)+' repl'+(c.thread.length>2?'ies':'y'):'')+' for everyone?'); }catch(e){}
+        if(!ok) return;
+        comments=comments.filter(function(x){ return x.id!==c.id; });
+        persist(); render();
+      });
+      els.tray.appendChild(item);
+    });
+    els.tray.classList.add('ll-show');
+    els.tray.scrollTop=keepScroll;
+  }
+
+  function setReanchor(id){ state.reanchor=id; document.body.classList.toggle('ll-reanchoring', !!id); }
+  // scroll to a block and flash it, if it is on screen in the current state
+  function flashBlock(id){
+    var a=anchors[id]; if(!a||!a.el.offsetParent) return false;
+    a.el.scrollIntoView({behavior:'smooth',block:'center'}); a.el.classList.remove('ll-flash'); void a.el.offsetWidth; a.el.classList.add('ll-flash');
+    return true;
+  }
+  // a block the reviewer can act on right now: the structural axis is off
+  // (linear mode shows everything) or the block is in the active state
+  function blockLive(block){ var pa=primaryAxis(); return (pa.applies&&!pa.applies()) || primaryOf(block)===pa.active(); }
+
+  // Re-attach an orphaned comment to a block a person chose. The target is
+  // rebuilt from the new block; the state keeps every recorded axis except the
+  // structural one, which follows the block (LivingLinkState.reanchorState).
+  function attach(c, id){
+    if(!c||!anchors[id]) return;
+    c.target=makeTarget(id); c.anchor=id;
+    c.state=LLS.reanchorState(c.state, axisDefs(), anchors[id].state);
+    c.orphaned=false; c.match='manual';
+    setReanchor(null);
+    persist();
+    if(visible(c)){ select(c.id); }
+    else { state.selected=null; render(); note('Re-attached. It shows on “'+stateLabelOf(c)+'”.'); }
   }
   function handleCount(){
     var n=comments.filter(function(c){return !c.resolved;}).length;
@@ -945,17 +1208,80 @@ window.LivingLink = (function(){
       if(ev.key==='Enter'&&(ev.metaKey||ev.ctrlKey)) $('#ll-save').click();
       if(ev.key==='Escape') closeComposer(); });
 
+    // CAPTURE phase: in commenting mode, a click on a commentable block wins
+    // over whatever the host would do with it (e.g. a block of text inside a
+    // navigation button/card). We intercept before the host's handler fires:
+    // composer opens, navigation suppressed. Clicks on the control's
+    // non-commentable parts still pass through, so you can keep navigating.
     document.addEventListener('click',function(ev){
+      if(!ev.target.closest) return;
+      // Re-attaching an orphan (P1.5) takes the click first: a live block
+      // becomes the comment's new anchor. Anything else passes through, so the
+      // reviewer can switch tabs or filters while the pick stays armed.
+      if(state.reanchor){
+        if(ev.target.closest('#ll-composer,#ll-rail,#ll-dock,#ll-status')) return;
+        var target=ev.target.closest('[data-ll]');
+        if(target && blockLive(target)){
+          ev.preventDefault(); ev.stopPropagation();
+          attach(byId(state.reanchor), target.getAttribute('data-ll'));
+        }
+        return;
+      }
       if(!state.commenting) return;
+      if(ev.target.closest('#ll-composer')||ev.target.closest('#ll-rail')||ev.target.closest('#ll-dock')||ev.target.closest('#ll-status')) return;
+      var block=ev.target.closest('[data-ll]');
+      if(!block) return;
+      if(blockLive(block)){
+        ev.preventDefault(); ev.stopPropagation();
+        openComposer(block,ev);
+      }
+    },true);
+
+    // bubble phase: clicks that weren't on a block — close any open composer,
+    // unless they're on layer chrome or host controls (tab switches etc.)
+    document.addEventListener('click',function(ev){
+      if(!state.commenting || state.reanchor) return;
       if(ev.target.closest('#ll-composer')||ev.target.closest('#ll-rail')||
          (ADAPTER.controlSelector&&ev.target.closest(ADAPTER.controlSelector))||
-         ev.target.closest('#ll-dock')) return;
+         ev.target.closest('#ll-dock')||ev.target.closest('#ll-status')) return;
       var block=ev.target.closest('[data-ll]');
-      // commentable if the block is currently visible: either the structural
-      // axis is off (linear mode shows all) or the block is in the active state
-      var pa=primaryAxis();
-      if(block && ((pa.applies&&!pa.applies()) || primaryOf(block)===pa.active())) openComposer(block,ev); else closeComposer();
+      // commentable if the block is currently visible (see blockLive)
+      if(block && blockLive(block)) openComposer(block,ev); else closeComposer();
     });
+  }
+
+  // ---- export: every comment as a Markdown digest, grouped by screen/tab ----
+  // Quotes come from the durable target (not the live DOM), so off-screen and
+  // orphaned comments export fine too.
+  function exportMarkdown(){
+    var lines=['# Comments on '+(document.title||'Artifact'),'',
+      '_Exported '+new Date().toLocaleString()+' · '+comments.length+' comment'+(comments.length===1?'':'s')+'_',''];
+    if(!comments.length) lines.push('No comments yet.');
+    var groups={}, order=[];
+    comments.forEach(function(c){
+      var k=primaryValue(c); k=(k==null?'':String(k));
+      if(!(k in groups)){ groups[k]=[]; order.push(k); }
+      groups[k].push(c);
+    });
+    order.forEach(function(k){
+      lines.push('## '+(k===''?'General':primaryLabel(k)),'');
+      groups[k].forEach(function(c){
+        var q=(c.target&&c.target.quote)||''; if(q.length>240) q=q.slice(0,240)+'…';
+        var badge=stateLabelOf(c);
+        var flags=(c.resolved?' · resolved':'')+(c.orphaned?' · ⚠ block no longer found':'');
+        lines.push('- > '+(q||'(no quote)'));
+        if(badge||flags) lines.push('  - _'+badge+flags+'_');
+        c.thread.forEach(function(m){ lines.push('  - **'+m.who+':** '+m.text); });
+        lines.push('');
+      });
+    });
+    var blob=new Blob([lines.join('\n')],{type:'text/markdown'});
+    var a=document.createElement('a');
+    var base=(location.pathname.split('/').pop()||'artifact').replace(/\.html?$/i,'');
+    a.href=URL.createObjectURL(blob);
+    a.download=base+'-comments.md';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },0);
   }
 
   // ---- toggles ----
@@ -977,11 +1303,37 @@ window.LivingLink = (function(){
     $('#ll-collapse').addEventListener('click',function(){ setOpen(false); });
     $('#ll-modebtn').addEventListener('click',function(){ setCommenting(!state.commenting); });
     $('#ll-readmode').addEventListener('click',function(){ setLinear(!state.linear); });
+    var who=$('#ll-whoami'); if(who) who.addEventListener('click', changeUser);
+    var ex=$('#ll-export'); if(ex) ex.addEventListener('click', exportMarkdown);
+    // the orphan chip opens and closes the tray (P1.5)
+    var orph=$('#ll-orphan');
+    if(orph){
+      orph.setAttribute('role','button'); orph.setAttribute('tabindex','0');
+      var toggleTray=function(){ state.tray=!state.tray; render(); };
+      orph.addEventListener('click', toggleTray);
+      orph.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); toggleTray(); } });
+    }
+    // Escape backs out one step: a pick in progress first, then the tray
+    document.addEventListener('keydown',function(ev){
+      if(ev.key!=='Escape') return;
+      if(state.reanchor){ setReanchor(null); state.tray=true; render(); }
+      else if(state.tray && $('#ll-composer').style.display!=='block'){ state.tray=false; render(); }
+    });
     if(ADAPTER.linearLayout) $('#ll-readmode').classList.add('ll-avail'); // only if supported
   }
 
   // ---- host state change ----
-  function onStateChange(){ state.selected=null; render(); }
+  // SPA-style hosts (e.g. app.innerHTML = view()) destroy and rebuild the DOM
+  // on navigation. If any anchored element went stale, re-scan the new DOM and
+  // re-resolve every comment by content — same machinery as load-time
+  // regeneration: exact hash -> fuzzy -> orphaned, never silently mis-anchored.
+  function onStateChange(){
+    state.selected=null;
+    var stale=false;
+    for(var k in anchors){ if(!document.documentElement.contains(anchors[k].el)){ stale=true; break; } }
+    if(stale){ initAnchors(); comments.forEach(resolveComment); }
+    render();
+  }
 
   var memStore={load:function(){return null;}, save:function(){}, getUser:function(){return null;}, setUser:function(){}, subscribe:function(){return function(){};}};
 
@@ -1015,6 +1367,7 @@ window.LivingLink = (function(){
     STORE=store || (typeof window!=='undefined' && window.LivingLinkStore) || memStore;
     NS=(typeof location!=='undefined' && location.pathname) || 'artifact';
     ME=STORE.getUser ? STORE.getUser() : null;
+    updateWhoami();
     wireComposer();
     wireToggles();
     ADAPTER.onStateChange(onStateChange);
@@ -1022,7 +1375,16 @@ window.LivingLink = (function(){
     window.addEventListener('scroll', layout, {passive:true});
     initAnchors();
 
-    var onRemote=function(){ if(loadFromStore()){ comments.forEach(resolveComment); render(); } };
+    // A remote change that leaves the store empty (the last comment was
+    // deleted elsewhere) is still a change. An empty array clears the working
+    // copy; null means the store has nothing to say (not connected, never
+    // written) and is ignored. Without this a stale client keeps the deleted
+    // comment and writes it back on its next save.
+    var onRemote=function(){
+      if(loadFromStore()){ comments.forEach(resolveComment); render(); return; }
+      var saved=STORE.load?STORE.load(NS):null;
+      if(Array.isArray(saved) && !saved.length && comments.length){ comments=[]; state.selected=null; render(); }
+    };
 
     if(typeof STORE.connect==='function'){
       // managed/async backend (Liveblocks, Velt): paint immediately, then
@@ -1097,10 +1459,10 @@ window.LivingLink = (function(){
     // Region seeds anchor to stable band labels; the block persists across
     // region switches (only its number updates in place), so the anchor holds.
     var s=[
-      ["summary", null,    "recovery is uneven", "Amin", "Lead with this line — the uneven recovery is the story for the review."],
-      ["metrics", "north", "Band A",             "Amin", "In North, Band A is well under forecast — worth a callout."],
-      ["metrics", "south", "Band B",             "You",  "South's Band B holds up better than the rest — note it here."],
-      ["metrics", null,    "forecast line is fixed", "You", "This note applies in every region — keep it general."],
+      ["summary", null,    "recovery is uneven", "Amin", "Lead with this line. The uneven recovery is the story for the review."],
+      ["metrics", "north", "Band A",             "Amin", "In North, Band A is well under forecast. Worth a callout."],
+      ["metrics", "south", "Band B",             "You",  "South's Band B holds up better than the rest. Note it here."],
+      ["metrics", null,    "forecast line is fixed", "You", "This note applies in every region. Keep it general."],
       ["plan",    null,    "daily logs",         "Amin", "Agreed. I'll own pulling the logs before Thursday."]
     ];
     return s.map(function(x){
